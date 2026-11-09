@@ -9,7 +9,9 @@
 /* ---------- Page ---------- */
 body.student { overflow-x: clip; }
 
-.glass { background: var(--surface); border: 1px solid var(--line); }
+/* .glass is the big-container class. It is boundless now: no outline and no fill.
+   Tiles and the call-to-action card add a very soft fill back below, still with no line. */
+.glass { background: transparent; border: 0; }
 
 /* ---------- Icons ---------- */
 .icon {
@@ -118,13 +120,13 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
 
 .filter-bar { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
 .filter-bar .searchbox { flex: 1 1 18rem; }
-.count-chip { padding: .3rem .75rem; border-radius: 6px; background: var(--chip); border: 1px solid var(--line); color: var(--muted); font-weight: 700; font-size: .9rem; }
+.count-chip { padding: .3rem .75rem; border-radius: 6px; background: var(--chip); color: var(--muted); font-weight: 700; font-size: .9rem; }
 
 /* ---------- Tiles (levels and semesters) ---------- */
 .tile-grid { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; margin: 0; padding: 0; list-style: none; }
 .tile {
   position: relative; display: flex; flex-direction: column; gap: 1.25rem; min-height: 11rem; padding: 1.1rem; overflow: hidden;
-  border-radius: var(--r-lg); color: var(--ink); text-decoration: none; transition: background-color .15s ease;
+  border-radius: var(--r-lg); background: var(--chip); color: var(--ink); text-decoration: none; transition: background-color .15s ease;
 }
 .tile:hover { background: var(--hover); }
 .tile-ico { display: block; width: auto; height: auto; background: none; color: var(--ink); }
@@ -138,7 +140,7 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
   .tile-grid.two { grid-template-columns: 1fr 1fr; }
 }
 
-.cta-card { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; padding: 1.1rem 1.25rem; border-radius: var(--r-lg); }
+.cta-card { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; padding: 1.1rem 1.25rem; border-radius: var(--r-lg); background: var(--chip); }
 .cta-card .tile-ico { flex: none; }
 .cta-card .cta-text { flex: 1 1 16rem; }
 .cta-card .cta-text strong { display: block; font: 700 1.1rem/1.2 var(--font-head); }
@@ -155,19 +157,19 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
 .course-card summary .chev { margin-left: auto; color: var(--muted); }
 .course-card[open] summary .chev { transform: rotate(90deg); }
 .course-title { min-width: 0; }
-.course-body { padding: 0 1.1rem 1rem; border-top: 1px solid var(--line); }
+.course-body { padding: 0 1.1rem 1rem; }
 .years { list-style: none; margin: 0; padding: 0; }
-.year-card { display: grid; gap: .75rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
-.year-card:last-child { border-bottom: 0; padding-bottom: 0; }
+.year-card { display: grid; gap: .75rem; padding: 1rem 0; }
+.year-card:last-child { padding-bottom: 0; }
 .year-card h3 { display: flex; align-items: center; gap: .5rem; margin: 0; }
-.res { padding: .85rem; border-radius: var(--r-md); background: var(--chip); border: 1px solid var(--line); }
+.res { padding: .85rem; border-radius: var(--r-md); background: var(--chip); }
 .res-title { display: flex; align-items: center; gap: .5rem; margin-bottom: .6rem; font-weight: 700; }
 .res-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
 .res-empty { display: flex; align-items: center; gap: .5rem; margin: 0; color: var(--muted); }
 .notes-box summary { display: inline-flex; align-items: center; gap: .5rem; font-weight: 700; cursor: pointer; }
 .notes-box pre {
   margin: .6rem 0; padding: .75rem; max-height: 22rem; overflow: auto; border-radius: var(--radius);
-  background: var(--surface); border: 1px solid var(--line); white-space: pre-wrap; overflow-wrap: anywhere; font: inherit;
+  background: var(--surface); white-space: pre-wrap; overflow-wrap: anywhere; font: inherit;
 }
 @media (min-width: 40rem) {
   .year-card { grid-template-columns: 7rem 1fr 1fr; align-items: start; }
@@ -185,8 +187,7 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
 .empty-state p { margin: 0; }
 
 /* ---------- Contribute form ---------- */
-.form-glass { max-width: 36rem; padding: 1.25rem; border-radius: var(--r-lg); }
-@media (min-width: 30rem) { .form-glass { padding: 1.75rem; } }
+.form-glass { max-width: 36rem; padding: 0; border-radius: var(--r-lg); }
 .form-glass .field { margin-bottom: .85rem; }
 .control { position: relative; }
 .control input, .control select {
@@ -254,7 +255,7 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
 /* ---------- Footer: about the developer ---------- */
 footer.site-foot { margin-top: auto; padding-block: 1rem 1.5rem; border-top: 0; color: inherit; font-size: inherit; }
 footer.site-foot .wrap { display: block; }
-.about { display: grid; gap: 1rem; padding: 1.25rem; border-radius: var(--r-lg); }
+.about { display: grid; gap: 1rem; padding: 1.25rem 0; border-radius: var(--r-lg); }
 .about h2 { margin: 0; font-size: 1.15rem; }
 .about p { margin: .35rem 0 0; color: var(--muted); }
 .about-links { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -265,4 +266,44 @@ footer.site-foot .wrap { display: block; }
 
 @media (prefers-reduced-motion: reduce) {
   .menu, .toast, .toast.is-leaving, .skeleton, .pill-btn.is-loading::after { animation-duration: .01ms; animation-iteration-count: 1; }
+}
+
+/* ---------- Phones: tighter, app-sized layout (the root font is already 14px, see style.css) ---------- */
+@media (max-width: 39.99rem) {
+  .topbar .wrap { min-height: 3.1rem; padding-block: .35rem; }
+  .brand-text strong { font-size: 1rem; }
+  .brand-text small { font-size: .78rem; margin-top: .1rem; }
+  .menu { width: 13.5rem; }
+  .menu-item { min-height: 2.9rem; padding: 0 1rem; gap: .8rem; font-size: 1rem; }
+  .pill-btn { min-height: 2.6rem; padding: 0 1rem; font-size: 1rem; }
+  .pill-btn.sm { min-height: 2.3rem; padding: 0 .85rem; font-size: .95rem; }
+  .btn-block { min-height: 2.9rem; font-size: 1.05rem; }
+  .icon-btn { width: 2.4rem; height: 2.4rem; }
+  .page-head { padding-block: .25rem 1rem; }
+  .page-head h1 { font-size: clamp(1.5rem, 6.5vw, 1.9rem); }
+  .hero2 { padding-block: .5rem 1.25rem; }
+  .hero2 p.lead { margin-bottom: 1.1rem; font-size: 1.05rem; }
+  .searchbox input[type="search"] { min-height: 2.8rem; font-size: 16px; padding-left: 2.8rem; }
+  .field-icon { left: .85rem; }
+  .suggest-item { padding: .55rem .5rem; }
+  .tile-grid { gap: .6rem; }
+  .tile { min-height: 7.5rem; gap: .7rem; padding: .9rem; }
+  .tile strong { font-size: 1.5rem; }
+  .tile .sub { margin-top: .25rem; padding-right: 1.4rem; font-size: .95rem; line-height: 1.3; }
+  .tile-arrow { right: .8rem; bottom: .8rem; }
+  .cta-card { margin-top: 1.5rem; padding: .9rem 1rem; }
+  .course-card { margin-bottom: .5rem; }
+  .course-card summary { min-height: 2.9rem; padding: .65rem .9rem; }
+  .course-body { padding: 0 .9rem .9rem; }
+  .skeleton { height: 2.9rem; margin-bottom: .5rem; }
+  .control input, .control select { min-height: 2.9rem; padding: 1.25rem .8rem .3rem 2.7rem; font-size: 16px; }
+  .control label { left: 2.7rem; font-size: 1rem; }
+  .control input:focus ~ label,
+  .control input:not(:placeholder-shown) ~ label,
+  .control input:-webkit-autofill ~ label,
+  .control select ~ label { top: .8rem; font-size: .75rem; }
+  .dropzone { padding: 1.1rem .75rem; }
+  .about { padding-block: 1rem; }
+  .about h2 { font-size: 1.1rem; }
+  .toast { max-width: 22rem; padding: .65rem .75rem; }
 }

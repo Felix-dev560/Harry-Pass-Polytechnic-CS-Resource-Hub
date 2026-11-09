@@ -76,7 +76,8 @@ input:focus, select:focus, textarea:focus { outline: none; border-color: var(--i
 input[type="file"] { padding: .45rem; }
 .trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
 
-.form-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem; max-width: 34rem; }
+/* Boundless: no outline, no fill. The form sits straight on the page; only the fields inside keep their thin line. */
+.form-card { background: transparent; border: 0; padding: 0; max-width: 34rem; }
 .row { display: grid; gap: 1rem; }
 .status { min-height: 1.5rem; margin: .75rem 0 0; font-weight: 600; }
 .status.error { color: var(--danger); }
@@ -115,4 +116,21 @@ footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wr
 
 @media (prefers-reduced-motion: reduce) {
   .splash { transition: none; }
+}
+
+/* ---------- Phones: scale everything down to app size ----------
+   Almost every size in these stylesheets is in rem, so shrinking the root font shrinks buttons, spacing,
+   icons and cards together. Phones get 14px, like Facebook and WhatsApp; screens 40rem and wider are untouched. */
+@media (max-width: 39.99rem) {
+  html { font-size: 87.5%; }
+  body { font-size: 1.0625rem; line-height: 1.5; }   /* 1.0625rem x 14px = about 15px */
+  h1 { font-size: clamp(1.6rem, 7vw, 2rem); max-width: none; }
+  h2 { font-size: 1.3rem; }
+  h3 { font-size: 1.05rem; }
+  .wrap { padding-inline: 1rem; }
+  main { padding-block: 1rem 2.5rem; }
+  /* 16px stops iPhones from zooming the page when a field is tapped. */
+  input, select, textarea { font-size: 16px; min-height: 2.6rem; }
+  .splash h1 { font-size: clamp(1.5rem, 6vw, 2rem); }
+  .stack > section { margin-bottom: 2rem; }
 }
