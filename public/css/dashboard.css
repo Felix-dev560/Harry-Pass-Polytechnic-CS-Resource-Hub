@@ -53,6 +53,7 @@
 .lib-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
 .post-list { list-style: none; margin: 0; padding: 0; }
 .post { display: grid; gap: .75rem; padding: 1rem 0; }
+.post + .post { border-top: 1px solid var(--line); }
 .post-year { display: flex; align-items: center; gap: .5rem; margin: 0; font: 700 1.1rem/1 var(--font-head); }
 .post-note { grid-column: 1 / -1; margin: 0; }
 .post-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
@@ -86,10 +87,25 @@ dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
 
 /* ---------- Phones ---------- */
 @media (max-width: 39.99rem) {
-  .dash main { padding-top: 3.5rem; }
-  .dash h2 { font-size: 1.4rem; }
-  .thumb-grid { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .5rem; }
-  .lib-level > summary, .lib-course > summary { min-height: 2.9rem; padding: .65rem .9rem; }
-  .lib-level > summary strong { font-size: 1.25rem; }
-  .lib-sem { padding: 0 .9rem .9rem; }
+  .dash main { padding-top: 3rem; }
+  .dash h2 { font-size: 1.15rem; }
+  /* Menu button and dropdown hug the right edge of the screen. */
+  .float-menu { top: max(.4rem, env(safe-area-inset-top)); right: 0; }
+  .dash .menu { right: 0; }
+  .thumb-grid { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .4rem; }
+  .library { margin-top: .6rem; }
+  .lib-level { margin-bottom: .4rem; }
+  .lib-level > summary, .lib-course > summary { min-height: 2.6rem; padding: .5rem .6rem; gap: .6rem; }
+  .lib-level > summary strong { font-size: 1rem; }
+  .lib-sem { padding: 0 .4rem .6rem; }
+  .lib-sem h3 { font-size: .9rem; font-weight: 600; }
+  .lib-course { margin-bottom: .4rem; }
+  .lib-body { padding: 0 .6rem .7rem; }
+  .lib-actions { gap: .35rem; }
+  /* Past question / handout buttons stay on one line: View, Replace, Remove. */
+  .res { padding: .7rem .6rem; }
+  .res-actions, .post-foot { flex-wrap: nowrap; gap: .35rem; }
+  .res-actions .pill-btn.sm, .post-foot .pill-btn.sm { flex: 0 1 auto; min-width: 0; gap: .3rem; padding: 0 .6rem; font-size: .88rem; white-space: nowrap; }
+  .post { padding: .8rem 0; gap: .6rem; }
+  .post-foot { justify-content: flex-start; }
 }

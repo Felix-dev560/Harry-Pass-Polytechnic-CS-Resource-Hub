@@ -1,4 +1,4 @@
-// Shared student-site UI: plain outline icons, toast pop-ups, live-search helpers and the "About me" footer.
+// Shared student-site UI: plain outline icons, toast pop-ups, live-search helpers and the "Developer" footer.
 // Icons are constant SVG strings below. User or database text never goes through innerHTML.
 import { h, LEVELS } from './api.js';
 
@@ -188,7 +188,7 @@ function renderFooter() {
   root.replaceChildren(h('div', { class: 'wrap' },
     h('section', { class: 'about glass', 'aria-labelledby': 'about-title' },
       h('div', {},
-        h('h2', { id: 'about-title' }, 'About me: ', h('span', { class: 'dev-name' }, DEV.name)),
+        h('h2', { id: 'about-title' }, 'Developer: ', h('span', { class: 'dev-name' }, DEV.name)),
         h('p', {}, `${DEV.role}. I built this hub. Check my work or get in touch.`)),
       h('div', { class: 'about-links' }, links)),
     h('div', { class: 'foot-meta' },

@@ -357,8 +357,8 @@ function postItem(course, m, body) {
     fileRow(course, m, 'handout', body),
     m.status_note && h('p', { class: 'muted post-note' }, `Note: ${m.status_note}`),
     h('div', { class: 'post-foot' },
-      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, m.year, 'year') }, icon('pencil'), 'Edit this year'),
-      h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteYear(course, m, body) }, icon('trash'), 'Delete this year')));
+      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, m.year, 'year') }, icon('pencil'), 'Edit year'),
+      h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteYear(course, m, body) }, icon('trash'), 'Delete year')));
 }
 
 function fileRow(course, m, kind, body) {
@@ -370,10 +370,10 @@ function fileRow(course, m, kind, body) {
     picker.value = '';
     if (file) await changeFile(course, m, kind, label, file, body);
   });
-  const state = !url ? (m.status_note || 'Nothing uploaded') : isHttpUrl(url) ? 'Document uploaded' : 'Old text notes';
+  const state = !url ? (m.status_note || 'Nothing uploaded') : isHttpUrl(url) ? '' : 'Old text notes';
   return h('div', { class: 'res' },
     h('div', { class: 'res-title' }, icon(kind === 'question' ? 'file-text' : 'book-open'), label),
-    h('p', { class: 'res-state' }, state),
+    state && h('p', { class: 'res-state' }, state),
     h('div', { class: 'res-actions' },
       url && isHttpUrl(url) && h('a', { class: 'pill-btn sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View'),
       h('button', { class: 'pill-btn sm', type: 'button', onclick: () => picker.click() }, icon('upload'), url ? 'Replace' : 'Upload'),
