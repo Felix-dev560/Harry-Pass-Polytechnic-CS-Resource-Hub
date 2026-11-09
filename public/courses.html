@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Courses | Harry Pass CS Hub</title>
+<meta name="color-scheme" content="light dark">
+<script src="js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/student.css">
+</head>
+<body class="student">
+
+<header class="topbar"><div class="wrap">
+  <div class="top-left">
+    <a class="icon-btn" id="back" href="index.html" aria-label="Back to semesters"><i data-icon="arrow-left"></i></a>
+    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
+  </div>
+  <div class="menu-wrap">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <a class="menu-item" role="menuitem" href="contribute.html"><i data-icon="upload"></i><span>Contribute</span></a>
+      <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
+    </div>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <div class="page-head">
+    <h1 id="page-title">Courses</h1>
+    <p>Open a course to see past questions and handouts for each year from 2021.</p>
+  </div>
+
+  <div class="filter-bar" id="filter-bar" hidden>
+    <div class="searchbox">
+      <i data-icon="search" class="field-icon"></i>
+      <input id="filter" type="search" placeholder="Filter by code or title" aria-label="Filter courses by code or title" autocomplete="off" spellcheck="false">
+      <button type="button" class="clear-btn" id="filter-clear" aria-label="Clear filter" hidden><i data-icon="x"></i></button>
+    </div>
+    <span class="count-chip" id="filter-count" role="status" aria-live="polite"></span>
+  </div>
+
+  <div id="course-list">
+    <div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>
+  </div>
+
+  <div class="empty-state glass" id="no-match" hidden>
+    <span class="tile-ico"><i data-icon="search"></i></span>
+    <p><strong>No course matches that search.</strong></p>
+    <p>Check the spelling or try just the course code.</p>
+  </div>
+  <div class="empty-state glass" id="empty-semester" hidden>
+    <span class="tile-ico"><i data-icon="inbox"></i></span>
+    <p><strong>No courses yet for this semester.</strong></p>
+    <p>Check back soon.</p>
+  </div>
+</div></main>
+
+<footer class="site-foot" id="site-footer"></footer>
+<script type="module" src="js/courses.js"></script>
+</body></html>

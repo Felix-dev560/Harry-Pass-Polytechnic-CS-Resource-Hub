@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Contribute | Harry Pass CS Hub</title>
+<meta name="color-scheme" content="light dark">
+<script src="js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/student.css">
+</head>
+<body class="student">
+
+<header class="topbar"><div class="wrap">
+  <div class="top-left">
+    <a class="icon-btn" id="back" href="index.html" aria-label="Back to home"><i data-icon="arrow-left"></i></a>
+    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
+  </div>
+  <div class="menu-wrap">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <a class="menu-item" role="menuitem" href="contribute.html"><i data-icon="upload"></i><span>Contribute</span></a>
+      <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
+    </div>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <div class="page-head">
+    <h1>Share an old paper or handout</h1>
+    <p>Take clear photos of a question paper or handout you have. You can send up to 20 photos at once. An admin checks them and adds them to the course. Submissions are anonymous.</p>
+  </div>
+
+  <form class="glass form-glass" id="contribute-form" novalidate>
+    <div class="field">
+      <label class="dropzone" id="dropzone" for="image">
+        <span class="dropzone-ico"><i data-icon="camera"></i></span>
+        <strong>Take or choose photos</strong>
+        <span class="hint">Up to 20 at once, for example every page of one paper. JPEG, PNG or WebP. Lay each page flat in good light.</span>
+        <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp" multiple>
+      </label>
+      <div id="preview" hidden>
+        <p class="preview-count" id="preview-count"></p>
+        <ul class="preview-list" id="preview-list"></ul>
+      </div>
+    </div>
+
+    <div class="form-row two">
+      <div class="field">
+        <div class="control">
+          <i data-icon="hash" class="field-icon"></i>
+          <input id="course_code" name="course_code" type="text" placeholder=" " maxlength="10" pattern="[A-Za-z]{2,5}[ \-]?[0-9]{3}" autocomplete="off" autocapitalize="characters" required>
+          <label for="course_code">Course code, e.g. COM 111</label>
+        </div>
+      </div>
+      <div class="field">
+        <div class="control">
+          <i data-icon="calendar" class="field-icon"></i>
+          <input id="year" name="year" type="number" min="2015" placeholder=" " inputmode="numeric" required>
+          <label for="year">Year, e.g. 2023</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <div class="control">
+        <i data-icon="folder" class="field-icon"></i>
+        <select id="semester" name="semester" required>
+          <option value="" disabled selected>Choose semester</option>
+          <option value="First">First semester</option>
+          <option value="Second">Second semester</option>
+        </select>
+        <label for="semester">Semester</label>
+      </div>
+    </div>
+    <div class="field">
+      <div class="control">
+        <i data-icon="book-open" class="field-icon"></i>
+        <input id="course_title" name="course_title" type="text" placeholder=" " maxlength="150" autocomplete="off">
+        <label for="course_title">Course title (optional)</label>
+      </div>
+    </div>
+
+    <div class="trap" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
+    <button class="pill-btn primary btn-block" type="submit"><i data-icon="upload"></i>Send photos</button>
+    <p id="form-status" class="status" role="status"></p>
+  </form>
+</div></main>
+
+<footer class="site-foot" id="site-footer"></footer>
+<script type="module" src="js/contribute.js"></script>
+</body></html>

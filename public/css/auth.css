@@ -1,0 +1,150 @@
+/* Admin sign in / register page. Loaded after style.css and reuses its tokens.
+   Layout: one flat card. Both forms sit side by side in a track; the track slides sideways
+   and the card's overflow hides whichever panel is off to the side. The card's data-mode
+   attribute ("login" or "register") is the only thing script changes.
+   Look: plain black/white/grey. No blobs, blur, shadows or gradients. Nothing moves on hover. */
+
+:root {
+  --slide-ms: 520ms;
+  --ease: cubic-bezier(.65, 0, .35, 1);
+}
+
+body.auth-body { overflow-x: clip; }
+
+/* ---------- Icons ---------- */
+.icon {
+  display: block; flex: none; width: 1.25rem; height: 1.25rem;
+  fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ---------- Top controls ---------- */
+.auth-top-nav {
+  position: absolute; z-index: 5;
+  top: max(1rem, env(safe-area-inset-top));
+  left: max(1rem, env(safe-area-inset-left));
+  right: max(1rem, env(safe-area-inset-right));
+  display: flex; justify-content: flex-end; align-items: center;
+}
+/* Just the icon: no circle, no border, no fill. Hover fades it to grey. */
+.icon-btn {
+  display: inline-grid; place-items: center; width: 2.5rem; height: 2.5rem; padding: 0;
+  border: 0; border-radius: 0; background: none; color: var(--ink);
+  cursor: pointer; text-decoration: none; transition: color .15s ease;
+}
+.icon-btn:hover { color: var(--muted); }
+/* The button shows the theme you would switch to. */
+.icon-btn .icon-sun { display: none; }
+:root[data-theme="dark"] .icon-btn .icon-moon { display: none; }
+:root[data-theme="dark"] .icon-btn .icon-sun { display: block; }
+
+/* ---------- Card ---------- */
+.auth-main { flex: 1; display: grid; place-items: center; padding: 5rem 1rem 2rem; }
+
+.auth-card {
+  width: 100%; max-width: 30rem; padding: 1.25rem; border-radius: 16px;
+  background: var(--surface); border: 1px solid var(--line);
+}
+@media (min-width: 30rem) { .auth-card { padding: 1.75rem; } }
+
+/* ---------- Tabs ---------- */
+.auth-tabs {
+  position: relative; display: grid; grid-template-columns: 1fr 1fr;
+  margin: 0 .35rem 1.5rem; padding: 4px; border-radius: var(--r-md); background: var(--chip); border: 1px solid var(--line);
+}
+.tab-indicator {
+  position: absolute; top: 4px; bottom: 4px; left: 4px; width: calc(50% - 4px);
+  border-radius: 7px; background: var(--bg); border: 1px solid var(--line);
+  transition: transform var(--slide-ms) var(--ease);
+}
+.auth-card[data-mode="register"] .tab-indicator { transform: translateX(100%); }
+.tab-btn {
+  position: relative; z-index: 1; min-height: 2.6rem; padding: 0 .75rem;
+  border: 0; border-radius: 7px; background: transparent; cursor: pointer;
+  font: 700 .98rem/1 var(--font-body); color: var(--muted); transition: color .15s ease;
+}
+.tab-btn[aria-selected="true"] { color: var(--ink); }
+
+/* ---------- Sliding track ---------- */
+/* Both panels always keep their full height and the track is as tall as the taller one, so the card
+   stays one fixed size while switching. Only the content slides; nothing shrinks or jumps. */
+.auth-viewport { container-type: inline-size; overflow: hidden; overflow: clip; }
+.auth-track { display: flex; width: 200%; transition: transform var(--slide-ms) var(--ease); }
+.auth-card[data-mode="register"] .auth-track { transform: translateX(-50%); }
+.auth-panel { flex: 0 0 50%; min-width: 0; display: flex; }
+.panel-clip { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; padding-inline: .35rem; overflow: hidden; }
+.panel-body { padding-block: .35rem; }
+
+/* ---------- Headings ---------- */
+.auth-head { text-align: center; margin-bottom: 1.25rem; }
+.auth-card .auth-title { max-width: none; margin: .5rem 0 .3rem; font: 800 1.65rem/1.15 var(--font-head); letter-spacing: -.01em; }
+
+/* ---------- Fields ---------- */
+.auth-card .field { margin-bottom: .85rem; }
+.auth-row { display: grid; }
+@container (min-width: 25rem) { .auth-row.two { grid-template-columns: 1fr 1fr; column-gap: .75rem; } }
+
+.control { position: relative; }
+.control input {
+  width: 100%; min-height: 3.4rem; padding: 1.35rem .9rem .4rem 2.9rem;
+  border-radius: var(--r-md); border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 1rem;
+}
+.control-password input { padding-right: 3.1rem; }
+
+.field-icon { position: absolute; left: .95rem; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+
+/* Floating label: sits in the field until it is focused or filled. */
+.control label {
+  position: absolute; left: 2.9rem; top: 50%; transform: translateY(-50%);
+  max-width: calc(100% - 3.6rem); margin: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  font-size: 1rem; font-weight: 600; color: var(--muted); pointer-events: none;
+  transition: top .15s ease, font-size .15s ease;
+}
+.control input:focus ~ label,
+.control input:not(:placeholder-shown) ~ label,
+.control input:-webkit-autofill ~ label { top: .95rem; font-size: .72rem; }
+
+.toggle-password {
+  position: absolute; top: 50%; right: .3rem; transform: translateY(-50%);
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0;
+  border: 0; background: transparent; color: var(--muted); cursor: pointer; transition: color .15s ease;
+}
+.toggle-password:hover { color: var(--ink); }
+.toggle-password .icon-eye-off,
+.toggle-password[aria-pressed="true"] .icon-eye { display: none; }
+.toggle-password[aria-pressed="true"] .icon-eye-off { display: block; }
+
+.auth-options { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin: .25rem 0 1rem; }
+.check { display: flex; align-items: center; gap: .6rem; margin: 0; color: var(--muted); font-size: .95rem; font-weight: 600; cursor: pointer; }
+.check input { flex: none; width: 1.2rem; height: 1.2rem; min-height: 0; margin: 0; padding: 0; accent-color: var(--ink); }
+
+/* ---------- Submit and status ---------- */
+.auth-submit {
+  display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: 3.25rem; margin-top: .25rem;
+  border: 0; border-radius: var(--r-md); cursor: pointer;
+  background: var(--accent); color: var(--accent-ink);
+  font: 700 1.05rem/1 var(--font-body); transition: opacity .15s ease;
+}
+.auth-submit:hover { opacity: .78; }
+.auth-submit:disabled { cursor: progress; opacity: .6; }
+.auth-submit.is-loading .submit-arrow { display: none; }
+.auth-submit.is-loading::after {
+  content: ""; width: 1.1rem; height: 1.1rem; border-radius: 50%;
+  border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.auth-card .status { min-height: 1.4rem; margin: .75rem 0 0; text-align: center; font-size: .95rem; }
+
+/* ---------- Small phones and reduced motion ---------- */
+@media (max-width: 22rem) {
+  .auth-main { padding-inline: .75rem; }
+  .auth-card { padding: 1rem; }
+  .auth-card .auth-title { font-size: 1.4rem; }
+}
+@media (max-height: 34rem) and (orientation: landscape) {
+  .auth-main { padding-top: 4.5rem; align-items: start; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .auth-track, .auth-panel, .tab-indicator, .control label { transition-duration: .01ms; }
+}

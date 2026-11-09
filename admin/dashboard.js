@@ -1,0 +1,541 @@
+import { api, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from '../js/api.js';
+import { icon, toast, confirmDialog, tokens, matches, bindSearch } from '../js/ui.js';
+
+const $ = (id) => document.getElementById(id);
+const VIEWS = ['courses', 'posts', 'submissions'];
+const SEMESTERS = ['First', 'Second'];
+const DOC_EXT = /\.(pdf|docx?|pptx?)$/i;
+const MAX_DOC = 10 * 1024 * 1024; // Cloudinary free plan limit per file
+const courseForm = $('course-form');
+let courses = [];
+let libGroups = []; // posts library: [{ el, sems: [{ el, items: [{ course, el, details, body }] }] }]. Declared here because showView() below can read it on first load.
+
+// ---------- Session and errors ----------
+async function guard() {
+  try {
+    await api('/api/auth/me');
+    return true;
+  } catch (err) {
+    if (err.status === 401) { location.replace('index.html#login'); return false; }
+    toast('error', 'Cannot open the dashboard', err.message);
+    return false;
+  }
+}
+
+/** Any API call that returns 401 mid-session sends the admin back to sign in. */
+function handleError(err, title = 'Something went wrong') {
+  if (err.status === 401) return location.replace('index.html#login');
+  toast('error', title, err.message, 6000);
+}
+
+const setBusy = (btn, busy) => { btn.disabled = busy; btn.classList.toggle('is-loading', busy); };
+
+$('logout').addEventListener('click', async () => {
+  try { await api('/api/auth/logout', { method: 'POST' }); } finally { location.replace('index.html#login'); }
+});
+
+// ---------- Views (one at a time, chosen from the menu) ----------
+function showView(name) {
+  if (name === 'upload' || name === 'materials') name = 'courses';
+  if (!VIEWS.includes(name)) name = 'courses';
+  for (const v of VIEWS) $(v).hidden = v !== name;
+  for (const item of document.querySelectorAll('[data-view]')) item.setAttribute('aria-current', String(item.dataset.view === name));
+  history.replaceState(null, '', `#${name}`);
+  window.scrollTo({ top: 0 });
+  if (name === 'posts') refreshOpenCourses();
+  if (name === 'submissions') loadSubmissions();
+}
+$('menu').addEventListener('click', (e) => {
+  const item = e.target.closest('[data-view]');
+  if (item) showView(item.dataset.view);
+});
+showView(location.hash.slice(1));
+
+// ---------- Uploading documents ----------
+/** Uploads straight from the browser to Cloudinary with a server-signed request (no Vercel body limit).
+ *  Documents go up as "raw" files so PDF, Word and PowerPoint keep their extension and are not blocked. */
+async function uploadFile(file, signature) {
+  if (!DOC_EXT.test(file.name)) throw new Error(`${file.name}: upload a PDF, Word or PowerPoint document.`);
+  if (file.size > MAX_DOC) throw new Error(`${file.name} is larger than 10 MB.`);
+  const sig = signature ?? await api('/api/courses/upload-signature');
+  const data = new FormData();
+  data.set('api_key', sig.apiKey);
+  data.set('timestamp', sig.timestamp);
+  data.set('folder', sig.folder);
+  data.set('use_filename', 'true');
+  data.set('unique_filename', 'true');
+  data.set('signature', sig.signature);
+  data.set('file', file);
+  let res;
+  try {
+    res = await fetch(`https://api.cloudinary.com/v1_1/${sig.cloudName}/raw/upload`, { method: 'POST', body: data });
+  } catch {
+    throw new Error('Could not reach Cloudinary. Check your connection and try again.');
+  }
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok || !isHttpUrl(json.secure_url)) throw new Error(`Cloudinary: ${json.error?.message || `upload failed (${res.status})`}`);
+  return json.secure_url;
+}
+
+const saveMaterial = (courseId, year, body) => api(`/api/courses/${courseId}/materials/${year}`, { method: 'PUT', body });
+
+// ---------- Courses and uploads: one form ----------
+const normalizeCode = (raw) => {
+  const m = /^([A-Za-z]{2,5})[\s-]?(\d{3})$/.exec(String(raw).trim());
+  return m ? `${m[1].toUpperCase()} ${m[2]}` : null;
+};
+const fileKinds = [['question', 'past question'], ['handout', 'handout']];
+const F = courseForm.elements;
+for (let y = currentYear(); y >= FIRST_YEAR; y--) $('m-year').append(h('option', { value: y }, y));
+$('m-year').prepend(h('option', { value: '' }, 'No year yet'));
+$('m-year').value = String(currentYear());
+let currentMaterial = { question_url: null, handout_url: null, status_note: null };
+
+/** The course the form points at: the one being edited, or one that already has this level, semester and code. */
+function formCourse() {
+  if (F.id.value) return courses.find((c) => String(c.id) === F.id.value) ?? null;
+  const code = normalizeCode(F.course_code.value);
+  return code ? courses.find((c) => c.level_id === Number(F.level_id.value) && c.semester === F.semester.value && c.course_code === code) ?? null : null;
+}
+
+/** Cloudinary stores "My_Notes.docx" as "My_Notes_x7k2ab.docx" (random 6-character suffix). Show the name the admin uploaded. */
+function docName(url) {
+  try {
+    const last = decodeURIComponent(new URL(url).pathname.split('/').pop() || '');
+    const name = last.replace(/^(.+\.[A-Za-z0-9]{2,5})_[A-Za-z0-9]{6}$/, '$1').replace(/_[A-Za-z0-9]{6}(?=\.[A-Za-z0-9]{2,5}$)/, '');
+    return name || 'Uploaded file';
+  } catch { return 'Uploaded file'; }
+}
+
+/** The line next to "Choose file": the new file if one was picked, otherwise the file already uploaded. */
+function renderFileName(kind) {
+  const url = currentMaterial[`${kind}_url`];
+  const picked = $(`m-${kind}-file`).files[0];
+  const name = $(`m-${kind}-name`);
+  const hint = $(`m-${kind}-hint`);
+  if (picked) {
+    name.textContent = picked.name;
+    hint.textContent = !$('m-year').value ? 'Choose a year above, or this file will not be saved.'
+      : url ? 'New file. It replaces the current one when you save.' : 'New file. It is uploaded when you save.';
+  } else if (!url) {
+    name.textContent = 'No file chosen';
+    hint.textContent = '';
+  } else if (isHttpUrl(url)) {
+    name.textContent = docName(url);
+    hint.textContent = 'Current file. Choose another from your device to replace it.';
+  } else {
+    name.textContent = 'Old text notes';
+    hint.textContent = 'Choose a file to replace them.';
+  }
+}
+for (const [kind] of fileKinds) $(`m-${kind}-file`).addEventListener('change', () => renderFileName(kind));
+
+function renderCurrent() {
+  for (const [kind] of fileKinds) {
+    const url = currentMaterial[`${kind}_url`];
+    $(`m-${kind}-current`).replaceChildren(
+      !url ? h('span', { class: 'muted' }, 'Pending')
+        : isHttpUrl(url) ? h('a', { class: 'pill-btn sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View current file')
+          : h('span', { class: 'muted' }, 'Old text notes are saved. Upload a file to replace them.'));
+    renderFileName(kind);
+  }
+}
+
+let loadToken = 0;
+async function loadMaterial() {
+  const token = ++loadToken;
+  const course = formCourse();
+  const year = $('m-year').value;
+  let next = { question_url: null, handout_url: null, status_note: null };
+  if (course && year) {
+    try {
+      const { materials } = await api(`/api/courses/${course.id}/materials`);
+      const row = materials.find((m) => String(m.year) === year);
+      if (row) next = { question_url: row.question_url ?? null, handout_url: row.handout_url ?? null, status_note: row.status_note ?? null };
+    } catch (err) { handleError(err); }
+  }
+  if (token !== loadToken) return; // a newer change replaced this one
+  currentMaterial = next;
+  $('m-question-file').value = '';
+  $('m-handout-file').value = '';
+  $('m-note').value = next.status_note ?? '';
+  renderCurrent();
+}
+for (const el of [F.level_id, F.semester, F.course_code, $('m-year')]) el.addEventListener('change', loadMaterial);
+
+/** Shows what is being edited at the top of the form: a year of a course, the course itself, or a new year. */
+function showBanner(mode, course, year) {
+  const banner = $('edit-banner');
+  if (!mode) { banner.hidden = true; return; }
+  const title = mode === 'year' ? `Editing year ${year}` : mode === 'course' ? 'Editing course' : 'Adding a new year';
+  $('edit-banner-title').textContent = title;
+  $('edit-banner-sub').textContent = `${course.course_code}, ${course.course_title}. ${LEVELS[course.level_id]}, ${course.semester} semester.`;
+  banner.hidden = false;
+}
+
+function resetCourseForm() {
+  courseForm.reset();
+  F.id.value = '';
+  showBanner(null);
+  $('m-year').value = String(currentYear());
+  $('course-save').replaceChildren(icon('plus'), 'Save');
+  $('course-cancel').hidden = true;
+  loadMaterial();
+}
+
+/** Fills the form from the posts list. mode is 'year' (edit that year's post), 'course' (edit only the course) or 'add' (new year). */
+function editInForm(course, year = '', mode = year ? 'year' : 'course') {
+  F.id.value = course.id;
+  F.level_id.value = course.level_id;
+  F.semester.value = course.semester;
+  F.course_code.value = course.course_code;
+  F.course_title.value = course.course_title;
+  $('m-year').value = String(year);
+  $('course-save').replaceChildren(icon('check'), 'Save changes');
+  $('course-cancel').hidden = false;
+  showBanner(mode, course, year);
+  showView('courses');
+  loadMaterial();
+}
+
+async function removeCourse(c) {
+  const ok = await confirmDialog({
+    title: `Delete ${c.course_code}?`, text: 'This also removes all of its uploaded materials. This cannot be undone.',
+    confirm: 'Delete course', danger: true,
+  });
+  if (!ok) return;
+  try {
+    await api(`/api/courses/${c.id}`, { method: 'DELETE' });
+    toast('success', 'Course deleted', c.course_code);
+    if (F.id.value === String(c.id)) resetCourseForm();
+    await loadCourses();
+  } catch (err) { handleError(err); }
+}
+
+async function loadCourses() {
+  try {
+    ({ courses } = await api('/api/courses'));
+    buildLibrary();
+    await loadMaterial();
+  } catch (err) { handleError(err, 'Could not load courses'); }
+}
+
+$('course-cancel').addEventListener('click', resetCourseForm);
+courseForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const code = normalizeCode(F.course_code.value);
+  const title = F.course_title.value.trim();
+  if (!code) return toast('error', 'Check the course code', 'It looks like COM 111.');
+  if (title.length < 3) return toast('error', 'Check the course title', 'Write at least 3 characters.');
+  const year = $('m-year').value;
+  const files = { question: $('m-question-file').files[0], handout: $('m-handout-file').files[0] };
+  const note = $('m-note').value.trim();
+  if (!year && (files.question || files.handout)) return toast('error', 'Choose a year first', 'A file is saved under a year. Pick the year above, then save.');
+  const body = { level_id: Number(F.level_id.value), semester: F.semester.value, course_code: code, course_title: title };
+  const btn = $('course-save');
+  setBusy(btn, true);
+  try {
+    // 1. Upload the documents first, so a failed upload leaves nothing half saved.
+    const urls = { question_url: currentMaterial.question_url, handout_url: currentMaterial.handout_url };
+    if (year) {
+      const chosen = fileKinds.filter(([kind]) => files[kind]);
+      if (chosen.length) {
+        toast('info', 'Uploading', chosen.map(([kind]) => files[kind].name).join(', '), 3000);
+        const sig = await api('/api/courses/upload-signature'); // one signature serves both files
+        const done = await Promise.all(chosen.map(([kind]) => uploadFile(files[kind], sig)));
+        chosen.forEach(([kind], i) => { urls[`${kind}_url`] = done[i]; });
+      }
+    }
+    // 2. Add or update the course.
+    let course = formCourse();
+    if (course) {
+      ({ course } = await api(`/api/courses/${course.id}`, { method: 'PUT', body }));
+    } else {
+      ({ course } = await api('/api/courses', { method: 'POST', body }));
+    }
+    // 3. Save the post. Anything not uploaded is marked pending.
+    if (year) {
+      const missing = fileKinds.filter(([kind]) => !urls[`${kind}_url`]).map(([, label]) => label);
+      const status_note = missing.length ? (note || (missing.length === 2 ? 'Pending' : `${missing[0][0].toUpperCase()}${missing[0].slice(1)} pending`)) : '';
+      await saveMaterial(course.id, year, { ...urls, status_note });
+    }
+    toast('success', 'Saved', `${code}${year ? `, ${year}` : ''}`);
+    resetCourseForm();
+    await loadCourses();
+  } catch (err) { handleError(err, 'Could not save'); } finally { setBusy(btn, false); }
+});
+
+// ---------- Posts library: level > semester > course > year ----------
+
+function libCourse(course) {
+  const body = h('div', { class: 'lib-body' });
+  const details = h('details', { class: 'lib-course' },
+    h('summary', {}, h('span', { class: 'code' }, course.course_code), h('span', { class: 'course-title' }, course.course_title), icon('chevron-right', 'chev')),
+    body);
+  details.addEventListener('toggle', () => { if (details.open) loadPosts(course, body); });
+  return { course, el: details, details, body };
+}
+
+function buildLibrary() {
+  const root = $('library');
+  const openCourses = new Set(libGroups.flatMap((g) => g.sems.flatMap((s) => s.items.filter((i) => i.details.open).map((i) => i.course.id))));
+  const openLevels = new Set(libGroups.filter((g) => g.el.open).map((g) => g.levelId));
+  if (courses.length === 0) {
+    libGroups = [];
+    root.replaceChildren(h('div', { class: 'empty-state glass' }, h('span', { class: 'tile-ico' }, icon('inbox')), h('p', {}, 'No courses yet.')));
+    return;
+  }
+  libGroups = [1, 2, 3, 4].map((levelId) => {
+    const inLevel = courses.filter((c) => c.level_id === levelId);
+    if (!inLevel.length) return null;
+    const sems = SEMESTERS.map((sem) => {
+      const list = inLevel.filter((c) => c.semester === sem);
+      if (!list.length) return null;
+      const items = list.map(libCourse);
+      return { el: h('div', { class: 'lib-sem' }, h('h3', {}, `${sem} semester`), items.map((i) => i.el)), items };
+    }).filter(Boolean);
+    const el = h('details', { class: 'lib-level glass' },
+      h('summary', {}, h('span', { class: 'tile-ico' }, icon(levelId <= 2 ? 'book-open' : 'graduation-cap')), h('strong', {}, LEVELS[levelId]),
+        h('span', { class: 'count-chip' }, `${inLevel.length} ${inLevel.length === 1 ? 'course' : 'courses'}`), icon('chevron-right', 'chev')),
+      sems.map((s) => s.el));
+    return { el, sems, levelId };
+  }).filter(Boolean);
+  root.replaceChildren(...libGroups.map((g) => g.el));
+  for (const g of libGroups) {
+    if (openLevels.has(g.levelId)) g.el.open = true;
+    for (const s of g.sems) for (const it of s.items) if (openCourses.has(it.course.id)) it.details.open = true;
+  }
+  applyLibFilter();
+}
+
+function applyLibFilter() {
+  const toks = tokens($('lib-filter').value);
+  for (const g of libGroups) {
+    let levelShown = 0;
+    for (const s of g.sems) {
+      let semShown = 0;
+      for (const it of s.items) {
+        const ok = matches(it.course, toks);
+        it.el.hidden = !ok;
+        if (ok) semShown++;
+      }
+      s.el.hidden = semShown === 0;
+      levelShown += semShown;
+    }
+    g.el.hidden = levelShown === 0;
+    if (toks.length && levelShown) g.el.open = true;
+  }
+  $('lib-empty').hidden = !(toks.length && libGroups.length && libGroups.every((g) => g.el.hidden));
+}
+bindSearch($('lib-filter'), $('lib-filter-clear'), applyLibFilter);
+
+function refreshOpenCourses() {
+  for (const g of libGroups) for (const s of g.sems) for (const it of s.items) if (it.details.open) loadPosts(it.course, it.body);
+}
+
+async function loadPosts(course, body) {
+  body.replaceChildren(h('p', { class: 'muted' }, 'Loading posts...'));
+  try {
+    const { materials } = await api(`/api/courses/${course.id}/materials`);
+    const add = h('div', { class: 'lib-actions' },
+      h('button', { class: 'pill-btn sm primary', type: 'button', onclick: () => editInForm(course, currentYear(), 'add') }, icon('plus'), 'Add a post'),
+      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, '', 'course') }, icon('pencil'), 'Edit course'),
+      h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => removeCourse(course) }, icon('trash'), 'Delete course'));
+    body.replaceChildren(add, materials.length
+      ? h('ul', { class: 'post-list' }, materials.map((m) => postItem(course, m, body)))
+      : h('p', { class: 'muted' }, 'No posts yet for this course.'));
+  } catch (err) {
+    body.replaceChildren(h('p', { class: 'muted' }, err.message));
+    handleError(err, 'Could not load posts');
+  }
+}
+
+function postItem(course, m, body) {
+  return h('li', { class: 'post' },
+    h('h4', { class: 'post-year' }, icon('calendar'), m.year),
+    fileRow(course, m, 'question', body),
+    fileRow(course, m, 'handout', body),
+    m.status_note && h('p', { class: 'muted post-note' }, `Note: ${m.status_note}`),
+    h('div', { class: 'post-foot' },
+      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, m.year, 'year') }, icon('pencil'), 'Edit this year'),
+      h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteYear(course, m, body) }, icon('trash'), 'Delete this year')));
+}
+
+function fileRow(course, m, kind, body) {
+  const label = kind === 'question' ? 'Past question' : 'Handout';
+  const url = m[`${kind}_url`];
+  const picker = h('input', { type: 'file', accept: '.pdf,.doc,.docx,.ppt,.pptx', hidden: true, 'aria-label': `Choose a file to replace the ${label.toLowerCase()}` });
+  picker.addEventListener('change', async () => {
+    const file = picker.files[0];
+    picker.value = '';
+    if (file) await changeFile(course, m, kind, label, file, body);
+  });
+  const state = !url ? (m.status_note || 'Nothing uploaded') : isHttpUrl(url) ? 'Document uploaded' : 'Old text notes';
+  return h('div', { class: 'res' },
+    h('div', { class: 'res-title' }, icon(kind === 'question' ? 'file-text' : 'book-open'), label),
+    h('p', { class: 'res-state' }, state),
+    h('div', { class: 'res-actions' },
+      url && isHttpUrl(url) && h('a', { class: 'pill-btn sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View'),
+      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => picker.click() }, icon('upload'), url ? 'Replace' : 'Upload'),
+      url && h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => removeFile(course, m, kind, label, body) }, icon('trash'), 'Remove'),
+      picker));
+}
+
+const materialBody = (m, patch) => ({ question_url: m.question_url, handout_url: m.handout_url, status_note: m.status_note, ...patch });
+
+async function changeFile(course, m, kind, label, file, body) {
+  try {
+    toast('info', `Uploading ${label.toLowerCase()}`, file.name, 3000);
+    const url = await uploadFile(file);
+    await saveMaterial(course.id, m.year, materialBody(m, { [`${kind}_url`]: url }));
+    toast('success', 'Post updated', `${course.course_code} ${m.year}, ${label.toLowerCase()}`);
+    await loadPosts(course, body);
+  } catch (err) { handleError(err, 'Could not update the post'); }
+}
+
+async function removeFile(course, m, kind, label, body) {
+  const ok = await confirmDialog({
+    title: `Remove the ${label.toLowerCase()}?`, text: `${course.course_code}, ${m.year}. Students will no longer see it.`,
+    confirm: 'Remove', danger: true,
+  });
+  if (!ok) return;
+  try {
+    const next = materialBody(m, { [`${kind}_url`]: null });
+    if (!next.question_url && !next.handout_url && !next.status_note) {
+      await api(`/api/courses/${course.id}/materials/${m.year}`, { method: 'DELETE' });
+    } else {
+      await saveMaterial(course.id, m.year, next);
+    }
+    toast('success', `${label} removed`, `${course.course_code} ${m.year}`);
+    await loadPosts(course, body);
+  } catch (err) { handleError(err); }
+}
+
+async function deleteYear(course, m, body) {
+  const ok = await confirmDialog({
+    title: `Delete ${course.course_code}, ${m.year}?`, text: 'Both the past question and the handout for this year are removed.',
+    confirm: 'Delete year', danger: true,
+  });
+  if (!ok) return;
+  try {
+    await api(`/api/courses/${course.id}/materials/${m.year}`, { method: 'DELETE' });
+    toast('success', 'Post deleted', `${course.course_code} ${m.year}`);
+    await loadPosts(course, body);
+  } catch (err) { handleError(err); }
+}
+
+// ---------- Student photos ----------
+const safeImage = (url) => typeof url === 'string' && url.startsWith('https://res.cloudinary.com/');
+const thumbUrl = (url) => url.replace('/upload/', '/upload/c_limit,w_480,q_auto,f_auto/');
+/** Cloudinary's fl_attachment flag makes the browser download the image with a readable file name. */
+const downloadUrl = (url, name) => url.replace('/upload/', `/upload/fl_attachment:${name}/`);
+const fileName = (g, i) => [g.code.replace(/\s+/g, ''), g.semester, g.year, String(i + 1).padStart(2, '0')].filter(Boolean).join('_');
+const semesterLabel = (g) => (g.semester ? `${g.semester} semester` : 'Semester not given');
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function groupSubmissions(list) {
+  const map = new Map();
+  for (const s of list) {
+    const key = `${s.course_code}|${s.semester ?? ''}|${s.year}`;
+    if (!map.has(key)) map.set(key, { code: s.course_code, semester: s.semester ?? null, year: s.year, title: s.course_title, items: [] });
+    const g = map.get(key);
+    g.title ||= s.course_title;
+    g.items.push(s);
+  }
+  for (const g of map.values()) g.items.sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+  return [...map.values()].sort((a, b) => new Date(b.items.at(-1).submitted_at) - new Date(a.items.at(-1).submitted_at));
+}
+
+function thumbItem(g, s, i) {
+  const name = fileName(g, i);
+  const download = h('a', {
+    class: 'icon-btn sm', href: downloadUrl(s.image_url, name), download: '', 'aria-label': `Download photo ${i + 1}`,
+    onclick: () => toast('success', 'Download started', `${name} will be in your downloads folder.`),
+  }, icon('download'));
+  const remove = h('button', {
+    class: 'icon-btn sm danger', type: 'button', 'aria-label': `Delete photo ${i + 1}`, onclick: () => deleteOne(g, s),
+  }, icon('trash'));
+  const image = h('a', { href: s.image_url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': `Open photo ${i + 1} of ${g.code}, ${semesterLabel(g)}, ${g.year}` },
+    h('img', { src: thumbUrl(s.image_url), alt: `Photo ${i + 1} sent for ${g.code}, ${semesterLabel(g)}, ${g.year}`, loading: 'lazy' }));
+  return h('li', { class: 'thumb' }, image,
+    h('div', { class: 'thumb-actions' },
+      h('p', { class: 'hint' }, new Date(s.submitted_at).toLocaleDateString()),
+      h('span', { class: 'sub-actions' }, download, remove)));
+}
+
+function groupCard(g) {
+  const count = `${g.items.length} ${g.items.length === 1 ? 'photo' : 'photos'}`;
+  const meta = h('div', { class: 'meta' },
+    h('span', { class: 'code' }, g.code), h('strong', {}, g.year),
+    h('span', { class: g.semester ? 'count-chip' : 'muted' }, semesterLabel(g)),
+    g.title && h('span', { class: 'muted' }, g.title),
+    h('span', { class: 'count-chip' }, count));
+  const actions = h('div', { class: 'sub-actions' },
+    h('button', { class: 'pill-btn sm primary', type: 'button', onclick: () => downloadAll(g) }, icon('download'), 'Download all'),
+    h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteGroup(g) }, icon('trash'), 'Delete all'));
+  return h('section', { class: 'sub-group glass' },
+    h('div', { class: 'sub-head' }, meta, actions),
+    h('ul', { class: 'thumb-grid' }, g.items.map((s, i) => thumbItem(g, s, i))));
+}
+
+function renderQueue(list) {
+  const badge = $('queue-count');
+  badge.textContent = list.length;
+  badge.hidden = list.length === 0;
+  $('queue-status').textContent = list.length ? '' : 'No photos waiting. New ones from students will appear here.';
+  $('queue').replaceChildren(...groupSubmissions(list).map(groupCard));
+}
+
+async function loadSubmissions() {
+  try {
+    const { submissions } = await api('/api/submissions');
+    renderQueue(submissions.filter((s) => safeImage(s.image_url)));
+  } catch (err) { handleError(err, 'Could not load student photos'); }
+}
+
+async function downloadAll(g) {
+  toast('info', 'Downloading photos', `${g.items.length} files. If your browser asks, allow multiple downloads.`, 6000);
+  for (const [i, s] of g.items.entries()) {
+    const a = h('a', { href: downloadUrl(s.image_url, fileName(g, i)), download: '', rel: 'noopener' });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    await wait(600);
+  }
+  toast('success', 'Downloads started', `${g.items.length} photos for ${g.code} ${g.year}.`);
+}
+
+async function deleteOne(g, s) {
+  const ok = await confirmDialog({
+    title: 'Delete this photo?', text: 'It is removed from storage permanently. Download it first if you still need it.',
+    confirm: 'Delete photo', danger: true,
+  });
+  if (!ok) return;
+  try {
+    await api(`/api/submissions/${s.id}`, { method: 'DELETE' });
+    toast('success', 'Photo deleted', `${g.code} ${g.year}`);
+  } catch (err) { handleError(err); }
+  await loadSubmissions();
+}
+
+async function deleteGroup(g) {
+  const ok = await confirmDialog({
+    title: `Delete all ${g.items.length} photos?`, text: `${g.code}, ${semesterLabel(g)}, ${g.year}. They are removed from storage permanently. Download them first if you still need them.`,
+    confirm: 'Delete all', danger: true,
+  });
+  if (!ok) return;
+  let done = 0;
+  try {
+    for (const s of g.items) {
+      await api(`/api/submissions/${s.id}`, { method: 'DELETE' });
+      done++;
+    }
+    toast('success', 'Photos deleted', `${done} photos for ${g.code} ${g.year}.`);
+  } catch (err) {
+    handleError(err, `Deleted ${done} of ${g.items.length}, then stopped`);
+  }
+  await loadSubmissions();
+}
+
+// ---------- Start ----------
+if (await guard()) await Promise.all([loadCourses(), loadSubmissions()]);

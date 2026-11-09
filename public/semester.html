@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Choose a semester | Harry Pass CS Hub</title>
+<meta name="color-scheme" content="light dark">
+<script src="js/theme.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/student.css">
+</head>
+<body class="student">
+
+<header class="topbar"><div class="wrap">
+  <div class="top-left">
+    <a class="icon-btn" id="back" href="index.html" aria-label="Back to levels"><i data-icon="arrow-left"></i></a>
+    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
+  </div>
+  <div class="menu-wrap">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <a class="menu-item" role="menuitem" href="contribute.html"><i data-icon="upload"></i><span>Contribute</span></a>
+      <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
+    </div>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <div class="page-head">
+    <h1 id="level-name">Level</h1>
+    <p>Choose a semester, or search this level's courses by code or title.</p>
+  </div>
+
+  <label class="search-label" for="filter">Search courses</label>
+  <div class="searchbox">
+    <i data-icon="search" class="field-icon"></i>
+    <input id="filter" type="search" placeholder="Start typing a code or title" autocomplete="off" spellcheck="false" aria-describedby="sem-status" aria-controls="sem-results">
+    <button type="button" class="clear-btn" id="filter-clear" aria-label="Clear search" hidden><i data-icon="x"></i></button>
+  </div>
+  <ul class="suggest glass" id="sem-results"></ul>
+  <p class="hint" id="sem-status" role="status"></p>
+
+  <ul class="tile-grid two" id="sem-tiles">
+    <li><a class="tile glass" data-semester="First" href="index.html"><span class="tile-ico"><i data-icon="calendar"></i></span><span><strong>First semester</strong><span class="sub">Courses taught from the start of the session</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+    <li><a class="tile glass" data-semester="Second" href="index.html"><span class="tile-ico"><i data-icon="calendar"></i></span><span><strong>Second semester</strong><span class="sub">Courses taught in the second half</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+  </ul>
+</div></main>
+
+<footer class="site-foot" id="site-footer"></footer>
+<script type="module" src="js/semester.js"></script>
+</body></html>

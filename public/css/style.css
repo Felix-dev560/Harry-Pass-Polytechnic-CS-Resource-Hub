@@ -1,0 +1,118 @@
+/* Harry Pass CS Hub. Mobile-first. Colours are tokens so light/dark switch by changing data-theme only.
+   Look: flat and plain. Black, white and greys only. No shadows, blur, gradients or coloured accents.
+   Hover is a soft ash-grey fade. Nothing moves on hover or focus. */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --ink: #111111;
+  --muted: #6b6b6b;        /* 5.3:1 on white */
+  --line: #e2e2e2;
+  --hover: #efefef;        /* the ash-grey shown on hover */
+  --chip: #f5f5f5;         /* quiet fill for tags and inner boxes */
+  --mark: #dcdcdc;         /* search match highlight */
+  --accent: #111111;       /* primary buttons are plain black */
+  --accent-ink: #ffffff;
+  --danger: #c62828;       /* only for delete actions and errors */
+  --focus: #111111;
+  --radius: 8px;
+  --r-lg: 12px;
+  --r-md: 10px;
+  --font-head: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", Helvetica, Arial, sans-serif;
+  --font-script: "Dancing Script", "Segoe Script", "Brush Script MT", cursive;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #000000;
+  --ink: #f2f2f2;
+  --muted: #9b9b9b;        /* 7.6:1 on black */
+  --line: #2a2a2a;
+  --hover: #1c1c1c;
+  --chip: #111111;
+  --mark: #3a3a3a;
+  --accent: #f2f2f2;
+  --accent-ink: #000000;
+  --danger: #ff6b63;
+  --focus: #f2f2f2;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  background: var(--bg); color: var(--ink);
+  font: 400 1.0625rem/1.55 var(--font-body);
+}
+img { max-width: 100%; display: block; }
+a { color: var(--ink); text-underline-offset: 3px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+h1, h2, h3 { font-family: var(--font-head); line-height: 1.1; margin: 0 0 .5em; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.1rem, 7.5vw, 4rem); font-weight: 800; max-width: 16ch; }
+h2 { font-size: 1.5rem; font-weight: 700; }
+h3 { font-size: 1.125rem; font-weight: 700; }
+p { margin: 0 0 1em; max-width: 62ch; }
+
+.wrap { width: 100%; max-width: 64rem; margin-inline: auto; padding-inline: 1.25rem; }
+main { flex: 1; padding-block: 2rem 4rem; }
+
+/* ---------- Form controls ---------- */
+label { display: block; font-weight: 600; margin-bottom: .35rem; }
+.field { margin-bottom: 1.1rem; }
+.hint { color: var(--muted); font-size: .95rem; margin: .25rem 0 0; }
+input, select, textarea {
+  width: 100%; min-height: 2.75rem; padding: .55rem .75rem;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: var(--radius);
+  font: inherit; transition: border-color .15s ease;
+}
+textarea { min-height: 7rem; resize: vertical; }
+input:hover, select:hover, textarea:hover { border-color: var(--muted); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+input[type="file"] { padding: .45rem; }
+.trap { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+.form-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.5rem; max-width: 34rem; }
+.row { display: grid; gap: 1rem; }
+.status { min-height: 1.5rem; margin: .75rem 0 0; font-weight: 600; }
+.status.error { color: var(--danger); }
+.status.ok { color: var(--ink); }
+
+/* ---------- Splash ---------- */
+.splash {
+  position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; text-align: center; padding: 2rem;
+  background: #000 url("../assets/student-splash.jpg") center / cover no-repeat; color: #fff;
+  transition: opacity .45s ease;
+}
+.splash::before { content: ""; position: absolute; inset: 0; background: rgb(0 0 0 / .62); }
+.splash > div { position: relative; }
+.splash h1 { margin-inline: auto; color: #fff; font-size: clamp(1.8rem, 6vw, 3rem); }
+.splash p { margin: 0 auto; color: #e6e6e6; }
+.splash.is-leaving { opacity: 0; pointer-events: none; }
+/* js/splash-gate.js adds .no-splash before first paint when the splash was already shown in this tab. */
+.no-splash .splash { display: none; }
+
+/* ---------- Shared bits ---------- */
+.code {
+  display: inline-block; flex: none; min-width: 5.25rem; text-align: center; padding: .15rem .6rem; border-radius: 6px;
+  background: var(--chip); color: var(--ink); border: 1px solid var(--line);
+  font: 800 .95rem/1.5 var(--font-head);
+}
+.hero { padding-block: 1rem 2.5rem; }
+
+footer { border-top: 1px solid var(--line); padding-block: 1.25rem; color: var(--muted); font-size: .95rem; }
+footer .wrap { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+
+.stack > section { margin-bottom: 3rem; }
+
+@media (min-width: 40rem) {
+  .row.two { grid-template-columns: 1fr 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash { transition: none; }
+}

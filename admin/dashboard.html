@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard | Harry Pass CS Hub</title>
+<meta name="color-scheme" content="light dark">
+<script src="../js/theme.js"></script>
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../css/student.css">
+<link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body class="student dash">
+
+<div class="float-menu">
+  <div class="menu-wrap">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <button type="button" class="menu-item" role="menuitem" data-view="courses"><i data-icon="upload"></i><span>Courses and uploads</span></button>
+      <button type="button" class="menu-item" role="menuitem" data-view="posts"><i data-icon="folder"></i><span>Posts</span></button>
+      <button type="button" class="menu-item" role="menuitem" data-view="submissions"><i data-icon="image"></i><span>Student photos</span><span class="badge" id="queue-count" hidden></span></button>
+      <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
+      <button type="button" class="menu-item" role="menuitem" id="logout"><i data-icon="log-out"></i><span>Sign out</span></button>
+    </div>
+  </div>
+</div>
+
+<main><div class="wrap stack">
+
+  <!-- Course and upload, one form -->
+  <section id="courses" aria-labelledby="courses-title">
+    <h2 id="courses-title">Courses</h2>
+    <form class="form-card glass" id="course-form" novalidate>
+      <div class="edit-banner" id="edit-banner" role="status" hidden>
+        <i data-icon="pencil"></i>
+        <div><strong id="edit-banner-title"></strong><small id="edit-banner-sub"></small></div>
+      </div>
+      <input type="hidden" name="id">
+      <div class="row two">
+        <div class="field"><label for="c-level">Level</label>
+          <select id="c-level" name="level_id" required>
+            <option value="1">ND 1</option><option value="2">ND 2</option><option value="3">HND 1</option><option value="4">HND 2</option>
+          </select></div>
+        <div class="field"><label for="c-semester">Semester</label>
+          <select id="c-semester" name="semester" required><option>First</option><option>Second</option></select></div>
+      </div>
+      <div class="row two">
+        <div class="field"><label for="c-code">Course code</label><input id="c-code" name="course_code" type="text" placeholder="COM 111" maxlength="10" required></div>
+        <div class="field"><label for="m-year">Year</label><select id="m-year" name="year"></select></div>
+      </div>
+      <div class="field"><label for="c-title">Course title</label><input id="c-title" name="course_title" type="text" maxlength="150" required></div>
+      <div class="field">
+        <label for="m-question-file">Past question</label>
+        <div class="current" id="m-question-current"></div>
+        <div class="filepick">
+          <input id="m-question-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
+          <span class="pill-btn sm filepick-btn" aria-hidden="true"><i data-icon="upload"></i>Choose file</span>
+          <span class="filepick-text"><span class="filepick-name" id="m-question-name"></span><small class="filepick-hint" id="m-question-hint"></small></span>
+        </div>
+      </div>
+      <div class="field">
+        <label for="m-handout-file">Handout</label>
+        <div class="current" id="m-handout-current"></div>
+        <div class="filepick">
+          <input id="m-handout-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
+          <span class="pill-btn sm filepick-btn" aria-hidden="true"><i data-icon="upload"></i>Choose file</span>
+          <span class="filepick-text"><span class="filepick-name" id="m-handout-name"></span><small class="filepick-hint" id="m-handout-hint"></small></span>
+        </div>
+      </div>
+      <div class="field"><label for="m-note">Note for anything missing</label><input id="m-note" type="text" maxlength="200" placeholder="Pending"></div>
+      <div class="form-buttons">
+        <button class="pill-btn primary" type="submit" id="course-save"><i data-icon="plus"></i>Save</button>
+        <button class="pill-btn" type="button" id="course-cancel" hidden>Cancel edit</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Posts library -->
+  <section id="posts" hidden aria-labelledby="posts-title">
+    <h2 id="posts-title">Posts</h2>
+    <div class="searchbox">
+      <i data-icon="search" class="field-icon"></i>
+      <input id="lib-filter" type="search" placeholder="Find a course by code or title" aria-label="Find a course" autocomplete="off" spellcheck="false">
+      <button type="button" class="clear-btn" id="lib-filter-clear" aria-label="Clear search" hidden><i data-icon="x"></i></button>
+    </div>
+    <div id="library" class="library"></div>
+    <div class="empty-state glass" id="lib-empty" hidden>
+      <span class="tile-ico"><i data-icon="search"></i></span>
+      <p><strong>No course matches that search.</strong></p>
+    </div>
+  </section>
+
+  <!-- Student photos -->
+  <section id="submissions" hidden aria-labelledby="submissions-title">
+    <h2 id="submissions-title">Student photos</h2>
+    <p id="queue-status" class="status" role="status"></p>
+    <div id="queue"></div>
+  </section>
+
+</div></main>
+<script type="module" src="dashboard.js"></script>
+</body></html>

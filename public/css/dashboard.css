@@ -1,0 +1,85 @@
+/* Admin dashboard extras. Loaded after style.css and student.css. Same flat look: no colour, no hover movement. */
+.dash main { padding-top: 4.5rem; }
+.dash h2 { font-size: 1.8rem; }
+.float-menu { position: fixed; z-index: 40; top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right)); }
+.menu-item[aria-current="true"] { background: var(--hover); }
+.badge { margin-left: auto; min-width: 1.5rem; padding: .15rem .5rem; border-radius: 6px; background: var(--ink); color: var(--bg); font-size: .8rem; text-align: center; }
+
+.muted { color: var(--muted); }
+.form-buttons { display: flex; flex-wrap: wrap; gap: .5rem; }
+.form-card.glass { max-width: 36rem; border-radius: var(--r-lg); }
+.current { margin: 0 0 .5rem; }
+
+/* Banner at the top of the form while a course or a year is being edited */
+.edit-banner { display: flex; align-items: flex-start; gap: .75rem; margin: 0 0 1.1rem; padding: .8rem 1rem; border: 1px solid var(--ink); border-radius: var(--r-md); background: var(--chip); }
+.edit-banner[hidden] { display: none; }
+.edit-banner .icon { flex: none; margin-top: .2rem; }
+.edit-banner strong, .edit-banner small { display: block; }
+.edit-banner small { margin-top: .15rem; color: var(--muted); }
+
+/* File chooser that shows the name of the file already uploaded instead of "No file chosen" */
+.filepick { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; padding: .55rem .65rem; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); cursor: pointer; }
+.filepick:hover { border-color: var(--muted); }
+.filepick:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
+.filepick input { position: absolute; inset: 0; width: 100%; height: 100%; min-height: 0; padding: 0; border: 0; box-shadow: none; opacity: 0; cursor: pointer; }
+.filepick-btn { flex: none; pointer-events: none; }
+.filepick-text { display: grid; flex: 1 1 11rem; min-width: 0; }
+.filepick-name { overflow-wrap: anywhere; font-weight: 600; } /* the whole file name stays readable, even on a phone */
+.filepick-hint { color: var(--muted); font-size: .85rem; }
+.filepick-hint:empty { display: none; }
+.pill-btn.danger { color: var(--danger); }
+.pill-btn.danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
+.pill-btn.danger-fill:hover { background: var(--danger); opacity: .8; }
+
+/* Menu button: just the icon, no circle or border. */
+#menu-btn { width: auto; height: auto; padding: .35rem; }
+
+/* ---------- Posts library ---------- */
+.library { margin-top: 1rem; }
+.lib-level { margin-bottom: .75rem; overflow: hidden; border-radius: var(--r-lg); }
+.lib-level > summary, .lib-course > summary {
+  display: flex; align-items: center; gap: .85rem; min-height: 3.25rem; padding: .8rem 1.1rem;
+  font-weight: 700; cursor: pointer; list-style: none; transition: background-color .15s ease;
+}
+.lib-level > summary:hover, .lib-course > summary:hover { background: var(--hover); }
+.lib-level > summary::-webkit-details-marker, .lib-course > summary::-webkit-details-marker { display: none; }
+.lib-level > summary strong { font: 800 1.4rem/1 var(--font-head); }
+.lib-level > summary .chev, .lib-course > summary .chev { margin-left: auto; color: var(--muted); }
+.lib-level[open] > summary .chev, .lib-course[open] > summary .chev { transform: rotate(90deg); }
+.lib-sem { padding: 0 1.1rem 1rem; }
+.lib-sem h3 { margin: .5rem 0; color: var(--muted); font-size: 1rem; }
+.lib-course { margin-bottom: .5rem; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--chip); }
+.lib-body { padding: 0 1rem 1rem; }
+.lib-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .5rem; }
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post { display: grid; gap: .75rem; padding: 1rem 0; border-top: 1px solid var(--line); }
+.post-year { display: flex; align-items: center; gap: .5rem; margin: 0; font: 700 1.1rem/1 var(--font-head); }
+.post-note { grid-column: 1 / -1; margin: 0; }
+.post-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
+.res-state { margin: 0 0 .6rem; color: var(--muted); }
+@media (min-width: 40rem) {
+  .post { grid-template-columns: 6rem 1fr 1fr; align-items: start; }
+}
+
+/* ---------- Student photos ---------- */
+.sub-group { margin-bottom: 1.25rem; padding: 1rem; border-radius: var(--r-lg); }
+.sub-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-bottom: .9rem; }
+.sub-head .meta { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; }
+.sub-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.thumb-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+.thumb { overflow: hidden; border-radius: var(--r-md); background: var(--chip); border: 1px solid var(--line); }
+.thumb img { width: 100%; aspect-ratio: 1; object-fit: cover; }
+.thumb-actions { display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .25rem .4rem; }
+.thumb-actions .hint { margin: 0; font-size: .82rem; }
+.icon-btn.danger { color: var(--danger); }
+.icon-btn.danger:hover { color: var(--danger); opacity: .6; }
+
+/* ---------- Confirm dialog ---------- */
+dialog.confirm {
+  width: min(26rem, calc(100% - 2rem)); padding: 1.25rem; border: 1px solid var(--ink); border-radius: var(--r-lg);
+  background: var(--surface); color: var(--ink);
+}
+dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
+.confirm h3 { margin: 0 0 .5rem; }
+.confirm p { margin: 0 0 1.1rem; color: var(--muted); }
+.confirm-actions { display: flex; justify-content: flex-end; gap: .5rem; }

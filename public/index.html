@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Harry Pass CS Hub | Past questions and handouts</title>
+<meta name="color-scheme" content="light dark">
+<script src="js/theme.js"></script>
+<script src="js/splash-gate.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/student.css">
+</head>
+<body class="student">
+<div class="splash" id="splash" role="status" aria-label="Loading">
+  <div><h1>Harry Pass Polytechnic</h1><p>Computer Science Resource Hub</p></div>
+</div>
+
+<header class="topbar"><div class="wrap">
+  <div class="top-left">
+    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
+  </div>
+  <div class="menu-wrap">
+    <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
+    <div class="menu" id="menu" role="menu" hidden>
+      <a class="menu-item" role="menuitem" href="contribute.html"><i data-icon="upload"></i><span>Contribute</span></a>
+      <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
+    </div>
+  </div>
+</div></header>
+
+<main><div class="wrap">
+  <section class="hero2">
+    <h1>Past questions beside this semester's handouts</h1>
+    <p class="lead">Every Computer Science paper and handout since 2021, organised by level and semester.</p>
+    <label class="search-label" for="search">Find a course by code or title</label>
+    <div class="searchbox">
+      <i data-icon="search" class="field-icon"></i>
+      <input id="search" type="search" placeholder="COM 111 or Introduction to Computing" autocomplete="off" spellcheck="false" aria-describedby="search-status" aria-controls="results">
+      <button type="button" class="clear-btn" id="search-clear" aria-label="Clear search" hidden><i data-icon="x"></i></button>
+    </div>
+    <ul class="suggest glass" id="results"></ul>
+    <p class="hint" id="search-status" role="status"></p>
+  </section>
+
+  <section aria-labelledby="levels-title">
+    <h2 id="levels-title">Browse by level</h2>
+    <ul class="tile-grid">
+      <li><a class="tile glass" href="semester.html?level=1"><span class="tile-ico"><i data-icon="book-open"></i></span><span><strong>ND 1</strong><span class="sub">National Diploma, year one</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+      <li><a class="tile glass" href="semester.html?level=2"><span class="tile-ico"><i data-icon="book-open"></i></span><span><strong>ND 2</strong><span class="sub">National Diploma, year two</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+      <li><a class="tile glass" href="semester.html?level=3"><span class="tile-ico"><i data-icon="graduation-cap"></i></span><span><strong>HND 1</strong><span class="sub">Higher National Diploma, year one</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+      <li><a class="tile glass" href="semester.html?level=4"><span class="tile-ico"><i data-icon="graduation-cap"></i></span><span><strong>HND 2</strong><span class="sub">Higher National Diploma, year two</span></span><i data-icon="arrow-right" class="tile-arrow"></i></a></li>
+    </ul>
+  </section>
+
+  <section class="cta-card glass" aria-labelledby="cta-title">
+    <span class="tile-ico"><i data-icon="camera"></i></span>
+    <div class="cta-text"><strong id="cta-title">Have an old paper or handout?</strong><span>Send a photo. An admin checks it and adds it to the course.</span></div>
+    <a class="pill-btn primary" href="contribute.html"><i data-icon="upload"></i>Contribute</a>
+  </section>
+</div></main>
+
+<footer class="site-foot" id="site-footer"></footer>
+<script type="module" src="js/splash.js"></script>
+<script type="module" src="js/search.js"></script>
+</body></html>
