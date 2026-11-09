@@ -274,7 +274,7 @@ footer.site-foot .wrap { display: block; }
   .brand-text strong { font-size: 1rem; }
   .brand-text small { font-size: .78rem; margin-top: .1rem; }
   /* The dropdown sits flush against the right edge of the screen. */
-  .menu { width: 13rem; right: calc(-1 * var(--gutter)); border-right: 0; border-radius: var(--r-md) 0 0 var(--r-md); }
+  .menu { width: 10rem; right: calc(-1 * var(--gutter)); border-right: 0; border-radius: var(--r-md) 0 0 var(--r-md); }
   .menu-item { min-height: 2.6rem; padding: 0 .9rem; gap: .7rem; font-size: .95rem; }
   .pill-btn { min-height: 2.6rem; padding: 0 1rem; font-size: 1rem; }
   .pill-btn.sm { min-height: 2.2rem; padding: 0 .7rem; font-size: .9rem; }
