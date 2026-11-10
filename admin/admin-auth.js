@@ -11,7 +11,8 @@ const loginForm = $('login-form');
 const registerForm = $('register-form');
 const TITLES = { login: 'Admin Sign In', register: 'Create Admin Account' };
 
-let registrationOpen = true;
+// Registration stays closed (and its tab hidden in the HTML) until the server says no admin exists yet.
+let registrationOpen = false;
 
 /** Slides to a panel. The CSS reacts to data-mode; inert keeps the hidden form out of tab order and screen readers. */
 function setMode(mode, { focus = true } = {}) {
@@ -105,17 +106,19 @@ registerForm.addEventListener('submit', async (event) => {
 });
 
 // ---- Start-up ----
-setMode(location.hash === '#register' ? 'register' : 'login', { focus: false });
+// The tabs and the register form are hidden in the HTML, so a returning admin never sees them flash.
+// They are only revealed when the server confirms that no admin exists yet.
+setMode('login', { focus: false });
 
-// Once an admin exists, registration is closed for good: show only the sign in form.
 try {
   ({ registrationOpen } = await api('/api/auth/status'));
 } catch {
-  registrationOpen = true; // status unknown; the server still refuses a second admin
+  registrationOpen = false; // status unknown: show sign in only; the server still refuses a second admin
 }
-if (!registrationOpen) {
-  tablist.hidden = true;
-  panels.register.hidden = true;
+if (registrationOpen) {
+  tablist.hidden = false;
+  panels.register.hidden = false;
+  if (location.hash === '#register') setMode('register', { focus: false });
+} else {
   for (const el of document.querySelectorAll('[data-register-only]')) el.hidden = true;
-  setMode('login', { focus: false });
 }

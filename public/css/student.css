@@ -273,8 +273,11 @@ footer.site-foot .wrap { display: block; }
   .topbar .wrap { min-height: 3.1rem; padding-block: .35rem; }
   .brand-text strong { font-size: 1rem; }
   .brand-text small { font-size: .78rem; margin-top: .1rem; }
-  /* The dropdown sits flush against the right edge of the screen. */
-  .menu { width: 10rem; right: calc(-1 * var(--gutter)); border-right: 0; border-radius: var(--r-md) 0 0 var(--r-md); }
+  /* The dropdown keeps a small gap from the right edge of the screen, and the three dots sit a little in from it. */
+  .menu-wrap { margin-right: .3rem; }
+  .menu { width: 10rem; right: 0; }
+  .menu-wrap .icon-btn { width: 2.6rem; height: 2.6rem; }
+  .menu-wrap .icon-btn .icon { width: 1.5rem; height: 1.5rem; }
   .menu-item { min-height: 2.6rem; padding: 0 .9rem; gap: .7rem; font-size: .95rem; }
   .pill-btn { min-height: 2.6rem; padding: 0 1rem; font-size: 1rem; }
   .pill-btn.sm { min-height: 2.2rem; padding: 0 .7rem; font-size: .9rem; }

@@ -157,9 +157,14 @@ router.put('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) =
     handout_url: readMaterialField(req.body?.handout_url, 'Handout'),
     status_note,
   };
-  const { data, error } = await db.from('course_materials').upsert(row, { onConflict: 'course_id,year' }).select().single();
+  // create: true means "add a new year". It never overwrites, so a year that already has a post is refused.
+  // Without it, the call edits that year in place (upsert).
+  const creating = req.body?.create === true;
+  const query = db.from('course_materials');
+  const { data, error } = await (creating ? query.insert(row) : query.upsert(row, { onConflict: 'course_id,year' })).select().single();
   if (error) {
     if (error.code === '23503') throw new HttpError(404, 'Course not found.');
+    if (error.code === '23505') throw new HttpError(409, `This course already has a post in ${year}. Open that year from the Posts list and edit it instead.`);
     throw error;
   }
   res.json({ material: data });

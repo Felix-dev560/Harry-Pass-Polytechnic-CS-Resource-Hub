@@ -27,6 +27,11 @@
 .filepick-name { overflow-wrap: anywhere; font-weight: 600; } /* the whole file name stays readable, even on a phone */
 .filepick-hint { color: var(--muted); font-size: .85rem; }
 .filepick-hint:empty { display: none; }
+.filepick-clear { position: relative; z-index: 2; flex: none; display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-left: auto; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; }
+.filepick-clear:hover { border-color: var(--danger); color: var(--danger); }
+.filepick-clear[hidden] { display: none; }
+.field-warn { display: block; margin-top: .35rem; color: var(--danger); font-weight: 600; font-size: .85rem; }
+.field-warn[hidden] { display: none; }
 .pill-btn.danger { color: var(--danger); }
 .pill-btn.danger-fill { background: var(--danger); border-color: var(--danger); color: #fff; }
 .pill-btn.danger-fill:hover { background: var(--danger); opacity: .8; }
@@ -89,9 +94,11 @@ dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
 @media (max-width: 39.99rem) {
   .dash main { padding-top: 3rem; }
   .dash h2 { font-size: 1.15rem; }
-  /* Menu button and dropdown hug the right edge of the screen. */
-  .float-menu { top: max(.4rem, env(safe-area-inset-top)); right: 0; }
+  /* Menu button and dropdown keep a small gap from the right edge of the screen. */
+  .float-menu { top: max(.4rem, env(safe-area-inset-top)); right: max(.7rem, env(safe-area-inset-right)); }
   .dash .menu { right: 0; }
+  .float-menu .icon-btn { width: 2.6rem; height: 2.6rem; }
+  .float-menu .icon-btn .icon { width: 1.5rem; height: 1.5rem; }
   .thumb-grid { grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr)); gap: .4rem; }
   .library { margin-top: .6rem; }
   .lib-level { margin-bottom: .4rem; }

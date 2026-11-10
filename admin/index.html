@@ -22,7 +22,7 @@
   <section class="auth-card" id="auth-card" data-mode="login">
 
     <!-- Sliding pill tabs -->
-    <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Admin access">
+    <div class="auth-tabs" id="auth-tabs" role="tablist" aria-label="Admin access" hidden>
       <span class="tab-indicator" aria-hidden="true"></span>
       <button type="button" class="tab-btn" id="tab-login" role="tab" aria-selected="true" aria-controls="login-panel" data-mode="login">Sign in</button>
       <button type="button" class="tab-btn" id="tab-register" role="tab" aria-selected="false" aria-controls="register-panel" data-mode="register" tabindex="-1">Register</button>
@@ -62,7 +62,6 @@
               </div>
               <button class="auth-submit" type="submit">
                 <span>Sign in</span>
-                <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
               </button>
               <p id="login-status" class="status" role="status" aria-live="polite"></p>
             </form>
@@ -70,7 +69,7 @@
         </div>
 
         <!-- Register panel -->
-        <div class="auth-panel panel-register" id="register-panel" role="tabpanel" aria-labelledby="tab-register" inert>
+        <div class="auth-panel panel-register" id="register-panel" role="tabpanel" aria-labelledby="tab-register" inert hidden>
           <div class="panel-clip"><div class="panel-body">
             <header class="auth-head">
               <h1 class="auth-title">Create admin account</h1>

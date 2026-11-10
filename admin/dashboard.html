@@ -46,7 +46,7 @@
       </div>
       <div class="row two">
         <div class="field"><label for="c-code">Course code</label><input id="c-code" name="course_code" type="text" placeholder="COM 111" maxlength="10" required></div>
-        <div class="field"><label for="m-year">Year</label><select id="m-year" name="year"></select></div>
+        <div class="field"><label for="m-year">Year</label><select id="m-year" name="year"></select><small class="field-warn" id="m-year-warn" role="alert" hidden></small></div>
       </div>
       <div class="field"><label for="c-title">Course title</label><input id="c-title" name="course_title" type="text" maxlength="150" required></div>
       <div class="field">
@@ -56,6 +56,7 @@
           <input id="m-question-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
           <span class="pill-btn sm filepick-btn" aria-hidden="true"><i data-icon="upload"></i>Choose file</span>
           <span class="filepick-text"><span class="filepick-name" id="m-question-name"></span><small class="filepick-hint" id="m-question-hint"></small></span>
+          <button type="button" class="filepick-clear" id="m-question-clear" aria-label="Remove the chosen past question file" hidden><i data-icon="x"></i></button>
         </div>
       </div>
       <div class="field">
@@ -65,6 +66,7 @@
           <input id="m-handout-file" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx">
           <span class="pill-btn sm filepick-btn" aria-hidden="true"><i data-icon="upload"></i>Choose file</span>
           <span class="filepick-text"><span class="filepick-name" id="m-handout-name"></span><small class="filepick-hint" id="m-handout-hint"></small></span>
+          <button type="button" class="filepick-clear" id="m-handout-clear" aria-label="Remove the chosen handout file" hidden><i data-icon="x"></i></button>
         </div>
       </div>
       <div class="field"><label for="m-note">Note for anything missing</label><input id="m-note" type="text" maxlength="200" placeholder="Pending"></div>

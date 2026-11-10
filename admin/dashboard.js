@@ -90,6 +90,10 @@ for (let y = currentYear(); y >= FIRST_YEAR; y--) $('m-year').append(h('option',
 $('m-year').prepend(h('option', { value: '' }, 'No year yet'));
 $('m-year').value = String(currentYear());
 let currentMaterial = { question_url: null, handout_url: null, status_note: null };
+// What the form is doing: 'year' = editing one existing year, 'course' = editing only the course,
+// 'add' = adding a new year from the Posts list, null = typed by hand. Only 'year' may touch an existing year.
+let formMode = null;
+let yearTaken = false; // true when the chosen year of the chosen course already has a post
 
 /** The course the form points at: the one being edited, or one that already has this level, semester and code. */
 function formCourse() {
@@ -113,6 +117,7 @@ function renderFileName(kind) {
   const picked = $(`m-${kind}-file`).files[0];
   const name = $(`m-${kind}-name`);
   const hint = $(`m-${kind}-hint`);
+  $(`m-${kind}-clear`).hidden = !picked;
   if (picked) {
     name.textContent = picked.name;
     hint.textContent = !$('m-year').value ? 'Choose a year above, or this file will not be saved.'
@@ -128,7 +133,16 @@ function renderFileName(kind) {
     hint.textContent = 'Choose a file to replace them.';
   }
 }
-for (const [kind] of fileKinds) $(`m-${kind}-file`).addEventListener('change', () => renderFileName(kind));
+for (const [kind] of fileKinds) {
+  $(`m-${kind}-file`).addEventListener('change', () => renderFileName(kind));
+  // The cross drops the file that is waiting to be uploaded. A file already saved on the post is not touched.
+  $(`m-${kind}-clear`).addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    $(`m-${kind}-file`).value = '';
+    renderFileName(kind);
+  });
+}
 
 function renderCurrent() {
   for (const [kind] of fileKinds) {
@@ -147,21 +161,37 @@ async function loadMaterial() {
   const course = formCourse();
   const year = $('m-year').value;
   let next = { question_url: null, handout_url: null, status_note: null };
+  let taken = false;
   if (course && year) {
     try {
       const { materials } = await api(`/api/courses/${course.id}/materials`);
       const row = materials.find((m) => String(m.year) === year);
-      if (row) next = { question_url: row.question_url ?? null, handout_url: row.handout_url ?? null, status_note: row.status_note ?? null };
+      if (row) {
+        taken = true;
+        // Only "Edit year" loads the saved post into the form. Adding a year starts from a blank post.
+        if (formMode === 'year') next = { question_url: row.question_url ?? null, handout_url: row.handout_url ?? null, status_note: row.status_note ?? null };
+      }
     } catch (err) { handleError(err); }
   }
   if (token !== loadToken) return; // a newer change replaced this one
   currentMaterial = next;
+  yearTaken = taken && formMode !== 'year';
+  const warn = $('m-year-warn');
+  warn.hidden = !yearTaken;
+  warn.textContent = yearTaken ? `${course.course_code} already has a post in ${year}. Pick another year, or edit that year from the Posts list.` : '';
   $('m-question-file').value = '';
   $('m-handout-file').value = '';
   $('m-note').value = next.status_note ?? '';
   renderCurrent();
 }
 for (const el of [F.level_id, F.semester, F.course_code, $('m-year')]) el.addEventListener('change', loadMaterial);
+// Changing which course the form points at, after "Add a post", turns it back into a hand-typed entry.
+for (const el of [F.level_id, F.semester, F.course_code]) {
+  el.addEventListener('change', () => {
+    if (formMode !== 'add' && formMode !== null) return;
+    if (formMode === 'add') { F.id.value = ''; formMode = null; showBanner(null); $('course-save').replaceChildren(icon('plus'), 'Save'); $('course-cancel').hidden = true; loadMaterial(); }
+  });
+}
 
 /** Shows what is being edited at the top of the form: a year of a course, the course itself, or a new year. */
 function showBanner(mode, course, year) {
@@ -176,6 +206,8 @@ function showBanner(mode, course, year) {
 function resetCourseForm() {
   courseForm.reset();
   F.id.value = '';
+  formMode = null;
+  $('m-year').disabled = false;
   showBanner(null);
   $('m-year').value = String(currentYear());
   $('course-save').replaceChildren(icon('plus'), 'Save');
@@ -190,7 +222,9 @@ function editInForm(course, year = '', mode = year ? 'year' : 'course') {
   F.semester.value = course.semester;
   F.course_code.value = course.course_code;
   F.course_title.value = course.course_title;
+  formMode = mode;
   $('m-year').value = String(year);
+  $('m-year').disabled = mode === 'year'; // editing a year cannot move it onto another year
   $('course-save').replaceChildren(icon('check'), 'Save changes');
   $('course-cancel').hidden = false;
   showBanner(mode, course, year);
@@ -235,6 +269,18 @@ courseForm.addEventListener('submit', async (event) => {
   const btn = $('course-save');
   setBusy(btn, true);
   try {
+    // Anything except "Edit year" adds a year. It joins the course if it exists, and never replaces a year that has a post.
+    const adding = formMode !== 'year';
+    const existing = formCourse();
+    if (adding && existing && year) {
+      const { materials } = await api(`/api/courses/${existing.id}/materials`);
+      if (materials.some((m) => String(m.year) === year)) {
+        return toast('error', `${existing.course_code} already has a post in ${year}`, 'Open that year from the Posts list and use Edit year to change it.', 7000);
+      }
+    }
+    if (adding && existing && !F.id.value && existing.course_title.trim().toLowerCase() !== title.toLowerCase()) {
+      return toast('error', `${existing.course_code} already exists with another title`, `It is "${existing.course_title}". Use that title to add a year to it, or edit the course from the Posts list.`, 7000);
+    }
     // 1. Upload the documents first, so a failed upload leaves nothing half saved.
     const urls = { question_url: currentMaterial.question_url, handout_url: currentMaterial.handout_url };
     if (year) {
@@ -249,7 +295,8 @@ courseForm.addEventListener('submit', async (event) => {
     // 2. Add or update the course.
     let course = formCourse();
     if (course) {
-      ({ course } = await api(`/api/courses/${course.id}`, { method: 'PUT', body }));
+      // A course that is only getting a new year is left exactly as it is.
+      if (formMode === 'year' || formMode === 'course') ({ course } = await api(`/api/courses/${course.id}`, { method: 'PUT', body }));
     } else {
       ({ course } = await api('/api/courses', { method: 'POST', body }));
     }
@@ -257,12 +304,12 @@ courseForm.addEventListener('submit', async (event) => {
     if (year) {
       const missing = fileKinds.filter(([kind]) => !urls[`${kind}_url`]).map(([, label]) => label);
       const status_note = missing.length ? (note || (missing.length === 2 ? 'Pending' : `${missing[0][0].toUpperCase()}${missing[0].slice(1)} pending`)) : '';
-      await saveMaterial(course.id, year, { ...urls, status_note });
+      await saveMaterial(course.id, year, { ...urls, status_note, ...(formMode === 'year' ? {} : { create: true }) });
     }
     toast('success', 'Saved', `${code}${year ? `, ${year}` : ''}`);
     resetCourseForm();
     await loadCourses();
-  } catch (err) { handleError(err, 'Could not save'); } finally { setBusy(btn, false); }
+  } catch (err) { handleError(err, 'Could not save'); if (err.status === 409) loadMaterial(); } finally { setBusy(btn, false); }
 });
 
 // ---------- Posts library: level > semester > course > year ----------
