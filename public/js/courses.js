@@ -1,5 +1,5 @@
 import { api, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from './api.js';
-import { icon, toast, tokens, matches, highlight, bindSearch, downloadUrl } from './ui.js';
+import { icon, toast, tokens, matches, highlight, bindSearch, downloadUrl, viewUrl } from './ui.js';
 
 const params = new URLSearchParams(location.search);
 const level = params.get('level');
@@ -29,7 +29,7 @@ function resource(kind, course, year, value, note) {
   if (isHttpUrl(value)) {
     const dl = downloadUrl(value);
     return h('div', { class: 'res' }, head, h('div', { class: 'res-actions' },
-      h('a', { class: 'pill-btn sm primary', href: value, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'Open'),
+      h('a', { class: 'pill-btn sm primary', href: viewUrl(value), target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'Open'),
       dl && h('a', {
         class: 'pill-btn sm', href: dl, download: '', rel: 'noopener noreferrer',
         onclick: () => toast('success', 'Download started', `${course.course_code} ${year} ${label.toLowerCase()} will be in your downloads folder.`),

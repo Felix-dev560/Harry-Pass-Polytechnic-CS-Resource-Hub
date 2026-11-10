@@ -19,6 +19,7 @@
       <button type="button" class="menu-item" role="menuitem" data-view="courses"><i data-icon="upload"></i><span>Courses and uploads</span></button>
       <button type="button" class="menu-item" role="menuitem" data-view="posts"><i data-icon="folder"></i><span>Posts</span></button>
       <button type="button" class="menu-item" role="menuitem" data-view="submissions"><i data-icon="image"></i><span>Student photos</span><span class="badge" id="queue-count" hidden></span></button>
+      <button type="button" class="menu-item" role="menuitem" data-view="password"><i data-icon="lock"></i><span>Password</span></button>
       <button type="button" class="menu-item" role="menuitem" data-theme-toggle><i data-icon="moon" class="icon-moon"></i><i data-icon="sun" class="icon-sun"></i><span data-theme-label>Dark mode</span></button>
       <button type="button" class="menu-item" role="menuitem" id="logout"><i data-icon="log-out"></i><span>Sign out</span></button>
     </div>
@@ -71,7 +72,7 @@
       </div>
       <div class="field"><label for="m-note">Note for anything missing</label><input id="m-note" type="text" maxlength="200" placeholder="Pending"></div>
       <div class="form-buttons">
-        <button class="pill-btn primary" type="submit" id="course-save"><i data-icon="plus"></i>Save</button>
+        <button class="pill-btn primary" type="submit" id="course-save">Save</button>
         <button class="pill-btn" type="button" id="course-cancel" hidden>Cancel edit</button>
       </div>
     </form>
@@ -97,6 +98,18 @@
     <h2 id="submissions-title">Student photos</h2>
     <p id="queue-status" class="status" role="status"></p>
     <div id="queue"></div>
+  </section>
+
+  <!-- Password -->
+  <section id="password" hidden aria-labelledby="password-title">
+    <h2 id="password-title">Password</h2>
+    <form class="form-card glass" id="password-form" novalidate>
+      <div class="field"><label for="p-new">New password</label><input id="p-new" type="password" autocomplete="new-password" maxlength="128" required></div>
+      <div class="field"><label for="p-confirm">Confirm new password</label><input id="p-confirm" type="password" autocomplete="new-password" maxlength="128" required></div>
+      <div class="form-buttons">
+        <button class="pill-btn primary" type="submit" id="password-save">Save</button>
+      </div>
+    </form>
   </section>
 
 </div></main>

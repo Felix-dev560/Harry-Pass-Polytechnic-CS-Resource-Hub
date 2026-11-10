@@ -92,4 +92,18 @@ router.get('/me', requireAdmin, (req, res) => {
   res.json({ email: req.admin.email });
 });
 
+// Changes the signed in admin's password. The new password has to be typed twice.
+router.put('/password', requireAdmin, asyncHandler(async (req, res) => {
+  const password = typeof req.body?.password === 'string' ? req.body.password : '';
+  const confirm = typeof req.body?.confirm_password === 'string' ? req.body.confirm_password : '';
+  if (password.length < 4 || password.length > 128) throw new HttpError(400, 'Password must be at least 4 characters.');
+  if (password !== confirm) throw new HttpError(400, 'The two passwords do not match.');
+
+  const password_hash = await bcrypt.hash(password, BCRYPT_COST);
+  const { data, error } = await db.from('admins').update({ password_hash }).eq('id', req.admin.sub).select('id').maybeSingle();
+  if (error) throw error;
+  if (!data) throw new HttpError(404, 'Admin account not found.');
+  res.json({ ok: true });
+}));
+
 module.exports = router;

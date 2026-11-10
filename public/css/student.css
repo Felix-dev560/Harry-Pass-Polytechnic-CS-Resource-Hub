@@ -286,21 +286,22 @@ footer.site-foot .wrap { display: block; }
   .page-head { padding-block: .25rem 1rem; }
   .page-head h1 { font-size: 1.3rem; }
   .hero2 { padding-block: .25rem 1rem; }
-  .hero2 h1 { margin-bottom: .75rem; font-size: 1.1rem; font-weight: 700; }
+  .hero2 h1 { margin-bottom: .75rem; font-size: 1rem; font-weight: 600; }
+  #levels-title { font-size: 1rem; font-weight: 600; }
   .searchbox input[type="search"] { min-height: 2.8rem; font-size: 16px; padding-left: 2.8rem; }
   .field-icon { left: .85rem; }
   .suggest-item { padding: .55rem .5rem; }
   .tile-grid { gap: .4rem; }
   .tile { min-height: 3.75rem; gap: .4rem; padding: .7rem; }
   .tile-ico .icon { width: 1.2rem; height: 1.2rem; }
-  .tile strong { font-size: .95rem; }
+  .tile strong { font-size: .9rem; font-weight: 600; }
   .tile .sub { margin-top: .15rem; padding-right: 1.2rem; font-size: .8rem; line-height: 1.25; }
   .tile-arrow { right: .6rem; bottom: .6rem; width: 1.1rem; height: 1.1rem; }
   /* Semester tiles: one slim row each (icon, name, arrow). */
   .tile-grid.two .tile { flex-direction: row; align-items: center; gap: .6rem; min-height: 3rem; padding: .5rem .7rem; }
   .tile-grid.two .tile-arrow { top: 50%; bottom: auto; transform: translateY(-50%); }
   .cta-card { margin-top: 1rem; padding: .75rem .7rem; }
-  .cta-card .cta-text strong { font-size: 1rem; }
+  .cta-card .cta-text strong { font-size: .92rem; font-weight: 600; }
   .course-card { margin-bottom: .4rem; }
   .course-card summary { min-height: 2.7rem; padding: .5rem .6rem; }
   .course-body { padding: 0 .6rem .7rem; }

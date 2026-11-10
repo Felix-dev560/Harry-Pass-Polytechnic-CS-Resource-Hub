@@ -1,8 +1,8 @@
 import { api, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from '../js/api.js';
-import { icon, toast, confirmDialog, tokens, matches, bindSearch } from '../js/ui.js';
+import { icon, toast, confirmDialog, tokens, matches, bindSearch, viewUrl, downloadUrl as docDownloadUrl } from '../js/ui.js';
 
 const $ = (id) => document.getElementById(id);
-const VIEWS = ['courses', 'posts', 'submissions'];
+const VIEWS = ['courses', 'posts', 'submissions', 'password'];
 const SEMESTERS = ['First', 'Second'];
 const DOC_EXT = /\.(pdf|docx?|pptx?)$/i;
 const MAX_DOC = 10 * 1024 * 1024; // Cloudinary free plan limit per file
@@ -149,7 +149,7 @@ function renderCurrent() {
     const url = currentMaterial[`${kind}_url`];
     $(`m-${kind}-current`).replaceChildren(
       !url ? h('span', { class: 'muted' }, 'Pending')
-        : isHttpUrl(url) ? h('a', { class: 'pill-btn sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View current file')
+        : isHttpUrl(url) ? h('a', { class: 'pill-btn sm', href: viewUrl(url), target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View current file')
           : h('span', { class: 'muted' }, 'Old text notes are saved. Upload a file to replace them.'));
     renderFileName(kind);
   }
@@ -189,7 +189,7 @@ for (const el of [F.level_id, F.semester, F.course_code, $('m-year')]) el.addEve
 for (const el of [F.level_id, F.semester, F.course_code]) {
   el.addEventListener('change', () => {
     if (formMode !== 'add' && formMode !== null) return;
-    if (formMode === 'add') { F.id.value = ''; formMode = null; showBanner(null); $('course-save').replaceChildren(icon('plus'), 'Save'); $('course-cancel').hidden = true; loadMaterial(); }
+    if (formMode === 'add') { F.id.value = ''; formMode = null; showBanner(null); $('course-save').replaceChildren('Save'); $('course-cancel').hidden = true; loadMaterial(); }
   });
 }
 
@@ -210,7 +210,7 @@ function resetCourseForm() {
   $('m-year').disabled = false;
   showBanner(null);
   $('m-year').value = String(currentYear());
-  $('course-save').replaceChildren(icon('plus'), 'Save');
+  $('course-save').replaceChildren('Save');
   $('course-cancel').hidden = true;
   loadMaterial();
 }
@@ -312,12 +312,66 @@ courseForm.addEventListener('submit', async (event) => {
   } catch (err) { handleError(err, 'Could not save'); if (err.status === 409) loadMaterial(); } finally { setBusy(btn, false); }
 });
 
+// ---------- Icon dropdowns ----------
+// A three-dot button that opens a small list of icon-only buttons. The list is attached to the page body
+// and placed by script, so a card that clips its content cannot cut it off.
+let openMenu = null;
+function closeMenu() {
+  if (!openMenu) return;
+  openMenu.menu.remove();
+  openMenu.trigger.setAttribute('aria-expanded', 'false');
+  openMenu = null;
+}
+document.addEventListener('click', (e) => {
+  if (openMenu && !openMenu.menu.contains(e.target) && !openMenu.trigger.contains(e.target)) closeMenu();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || !openMenu) return;
+  const { trigger } = openMenu;
+  closeMenu();
+  trigger.focus();
+});
+window.addEventListener('resize', closeMenu);
+window.addEventListener('scroll', closeMenu, true);
+
+/** entries: { icon, label, onClick, href, download, danger }. Entries that are false or null are skipped. */
+function dropdown(label, entries) {
+  const trigger = h('button', { class: 'icon-btn sm dd-trigger', type: 'button', 'aria-label': label, title: label, 'aria-haspopup': 'menu', 'aria-expanded': 'false' }, icon('more-vertical'));
+  const makeItem = (e) => {
+    const attrs = { class: `dd-item${e.danger ? ' danger' : ''}`, role: 'menuitem', 'aria-label': e.label, title: e.label };
+    // Close after the click has finished, so a link still opens or downloads.
+    const done = () => { e.onClick?.(); setTimeout(closeMenu, 0); };
+    return e.href
+      ? h('a', { ...attrs, href: e.href, target: e.download ? null : '_blank', download: e.download ? '' : null, rel: 'noopener noreferrer', onclick: done }, icon(e.icon))
+      : h('button', { ...attrs, type: 'button', onclick: done }, icon(e.icon));
+  };
+  trigger.addEventListener('click', (e) => {
+    e.preventDefault(); // some triggers sit inside a <summary>, so the card must not open or close
+    e.stopPropagation();
+    if (openMenu?.trigger === trigger) return closeMenu();
+    closeMenu();
+    const menu = h('div', { class: 'dd-menu', role: 'menu' }, entries.filter(Boolean).map(makeItem));
+    document.body.append(menu);
+    const r = trigger.getBoundingClientRect();
+    menu.style.top = `${r.bottom + 4}px`;
+    menu.style.right = `${document.documentElement.clientWidth - r.right}px`;
+    trigger.setAttribute('aria-expanded', 'true');
+    openMenu = { menu, trigger };
+    menu.firstElementChild?.focus();
+  });
+  return trigger;
+}
+
 // ---------- Posts library: level > semester > course > year ----------
 
 function libCourse(course) {
   const body = h('div', { class: 'lib-body' });
+  const options = dropdown(`Options for ${course.course_code}`, [
+    { icon: 'pencil', label: 'Edit course', onClick: () => editInForm(course, '', 'course') },
+    { icon: 'trash', label: 'Delete course', danger: true, onClick: () => removeCourse(course) },
+  ]);
   const details = h('details', { class: 'lib-course' },
-    h('summary', {}, h('span', { class: 'code' }, course.course_code), h('span', { class: 'course-title' }, course.course_title), icon('chevron-right', 'chev')),
+    h('summary', {}, h('span', { class: 'code' }, course.course_code), h('span', { class: 'course-title' }, course.course_title), options, icon('chevron-right', 'chev')),
     body);
   details.addEventListener('toggle', () => { if (details.open) loadPosts(course, body); });
   return { course, el: details, details, body };
@@ -384,18 +438,16 @@ async function loadPosts(course, body) {
   body.replaceChildren(h('p', { class: 'muted' }, 'Loading posts...'));
   try {
     const { materials } = await api(`/api/courses/${course.id}/materials`);
-    const add = h('div', { class: 'lib-actions' },
-      h('button', { class: 'pill-btn sm primary', type: 'button', onclick: () => editInForm(course, currentYear(), 'add') }, icon('plus'), 'Add a post'),
-      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, '', 'course') }, icon('pencil'), 'Edit course'),
-      h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => removeCourse(course) }, icon('trash'), 'Delete course'));
-    body.replaceChildren(add, materials.length
+    body.replaceChildren(materials.length
       ? h('ul', { class: 'post-list' }, materials.map((m) => postItem(course, m, body)))
-      : h('p', { class: 'muted' }, 'No posts yet for this course.'));
+      : [h('div', { class: 'lib-actions' }, addPostButton(course)), h('p', { class: 'muted' }, 'No posts yet for this course.')]);
   } catch (err) {
     body.replaceChildren(h('p', { class: 'muted' }, err.message));
     handleError(err, 'Could not load posts');
   }
 }
+
+const addPostButton = (course) => h('button', { class: 'pill-btn sm primary', type: 'button', onclick: () => editInForm(course, currentYear(), 'add') }, icon('plus'), 'Add a post');
 
 function postItem(course, m, body) {
   return h('li', { class: 'post' },
@@ -404,6 +456,7 @@ function postItem(course, m, body) {
     fileRow(course, m, 'handout', body),
     m.status_note && h('p', { class: 'muted post-note' }, `Note: ${m.status_note}`),
     h('div', { class: 'post-foot' },
+      addPostButton(course),
       h('button', { class: 'pill-btn sm', type: 'button', onclick: () => editInForm(course, m.year, 'year') }, icon('pencil'), 'Edit year'),
       h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteYear(course, m, body) }, icon('trash'), 'Delete year')));
 }
@@ -418,14 +471,22 @@ function fileRow(course, m, kind, body) {
     if (file) await changeFile(course, m, kind, label, file, body);
   });
   const state = !url ? (m.status_note || 'Nothing uploaded') : isHttpUrl(url) ? '' : 'Old text notes';
+  const isFile = Boolean(url) && isHttpUrl(url);
+  const options = dropdown(`${label} options`, [
+    isFile && { icon: 'eye', label: 'View', href: viewUrl(url) },
+    isFile && {
+      icon: 'download', label: 'Download', href: docDownloadUrl(url) ?? url, download: true,
+      onClick: () => toast('success', 'Download started', `${course.course_code} ${m.year} ${label.toLowerCase()} will be in your downloads folder.`),
+    },
+    { icon: 'upload', label: url ? 'Replace' : 'Upload', onClick: () => picker.click() },
+    Boolean(url) && { icon: 'trash', label: 'Delete', danger: true, onClick: () => removeFile(course, m, kind, label, body) },
+  ]);
   return h('div', { class: 'res' },
-    h('div', { class: 'res-title' }, icon(kind === 'question' ? 'file-text' : 'book-open'), label),
+    h('div', { class: 'res-head' },
+      h('div', { class: 'res-title' }, icon(kind === 'question' ? 'file-text' : 'book-open'), label),
+      options),
     state && h('p', { class: 'res-state' }, state),
-    h('div', { class: 'res-actions' },
-      url && isHttpUrl(url) && h('a', { class: 'pill-btn sm', href: url, target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'View'),
-      h('button', { class: 'pill-btn sm', type: 'button', onclick: () => picker.click() }, icon('upload'), url ? 'Replace' : 'Upload'),
-      url && h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => removeFile(course, m, kind, label, body) }, icon('trash'), 'Remove'),
-      picker));
+    picker);
 }
 
 const materialBody = (m, patch) => ({ question_url: m.question_url, handout_url: m.handout_url, status_note: m.status_note, ...patch });
@@ -583,6 +644,23 @@ async function deleteGroup(g) {
   }
   await loadSubmissions();
 }
+
+// ---------- Password ----------
+const passwordForm = $('password-form');
+passwordForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const next = $('p-new').value;
+  const again = $('p-confirm').value;
+  if (next.length < 4) return toast('error', 'Password is too short', 'Use at least 4 characters.');
+  if (next !== again) return toast('error', 'Passwords do not match', 'Type the same new password in both boxes.');
+  const btn = $('password-save');
+  setBusy(btn, true);
+  try {
+    await api('/api/auth/password', { method: 'PUT', body: { password: next, confirm_password: again } });
+    passwordForm.reset();
+    toast('success', 'Password changed', 'Use the new password the next time you sign in.');
+  } catch (err) { handleError(err, 'Could not change the password'); } finally { setBusy(btn, false); }
+});
 
 // ---------- Start ----------
 if (await guard()) await Promise.all([loadCourses(), loadSubmissions()]);

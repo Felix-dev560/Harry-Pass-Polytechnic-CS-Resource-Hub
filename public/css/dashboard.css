@@ -62,7 +62,26 @@
 .post-year { display: flex; align-items: center; gap: .5rem; margin: 0; font: 700 1.1rem/1 var(--font-head); }
 .post-note { grid-column: 1 / -1; margin: 0; }
 .post-foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: .5rem; justify-content: flex-end; }
-.res-state { margin: 0 0 .6rem; color: var(--muted); }
+.res-head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.res-head .res-title { margin: 0; }
+.res-state { margin: .6rem 0 0; color: var(--muted); }
+
+/* ---------- Icon dropdowns (course options, document options) ---------- */
+.lib-course > summary .dd-trigger { margin-left: -.35rem; }
+.dd-menu {
+  position: fixed; z-index: 50; display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
+  animation: fade-in .15s ease;
+}
+.dd-item {
+  display: grid; place-items: center; width: 3rem; height: 2.75rem; padding: 0;
+  border: 0; border-radius: 0; background: transparent; color: var(--ink);
+  text-decoration: none; cursor: pointer; transition: background-color .15s ease;
+}
+.dd-item + .dd-item { border-top: 1px solid var(--line); }
+.dd-item:hover, .dd-item:focus-visible { background: var(--hover); }
+.dd-item:focus-visible { outline-offset: -2px; }
+.dd-item.danger { color: var(--danger); }
 @media (min-width: 40rem) {
   .post { grid-template-columns: 6rem 1fr 1fr; align-items: start; }
 }
@@ -109,10 +128,10 @@ dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
   .lib-course { margin-bottom: .4rem; }
   .lib-body { padding: 0 .6rem .7rem; }
   .lib-actions { gap: .35rem; }
-  /* Past question / handout buttons stay on one line: View, Replace, Remove. */
+  /* Add a post, Edit year and Delete year share one row and wrap only if the screen is very narrow. */
   .res { padding: .7rem .6rem; }
-  .res-actions, .post-foot { flex-wrap: nowrap; gap: .35rem; }
-  .res-actions .pill-btn.sm, .post-foot .pill-btn.sm { flex: 0 1 auto; min-width: 0; gap: .3rem; padding: 0 .6rem; font-size: .88rem; white-space: nowrap; }
+  .post-foot { gap: .35rem; }
+  .post-foot .pill-btn.sm { flex: 0 1 auto; min-width: 0; gap: .3rem; padding: 0 .6rem; font-size: .88rem; white-space: nowrap; }
   .post { padding: .8rem 0; gap: .6rem; }
   .post-foot { justify-content: flex-start; }
 }
