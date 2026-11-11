@@ -194,8 +194,25 @@ function renderFooter() {
     return h('a', { class: 'foot-link', href: l.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': l.label, title: l.label }, icon(l.icon));
   });
   root.replaceChildren(h('div', { class: 'wrap' },
+    h('div', { class: 'dev-line' }, h('span', {}, 'Developer:'), ' ', h('span', { class: 'dev-name' }, DEV.name)),
     h('div', { class: 'about-links' }, links),
     h('div', { class: 'foot-meta' }, h('span', {}, `© ${new Date().getFullYear()} ${DEV.name}`))));
+  loadSignatureFont();
+}
+
+/** The developer name is set in Dancing Script (a handwritten script). The font is requested only after the page
+ *  has finished loading, so it never delays the first paint. Until it arrives the fallback script fonts are used. */
+function loadSignatureFont() {
+  const add = () => {
+    if (document.getElementById('signature-font')) return;
+    document.head.append(h('link', {
+      id: 'signature-font',
+      rel: 'stylesheet',
+      href: 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap',
+    }));
+  };
+  if (document.readyState === 'complete') add();
+  else window.addEventListener('load', add, { once: true });
 }
 
 /* ================= Header dropdown ================= */
