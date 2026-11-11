@@ -194,8 +194,23 @@ function renderFooter() {
     return h('a', { class: 'foot-link', href: l.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': l.label, title: l.label }, icon(l.icon));
   });
   root.replaceChildren(h('div', { class: 'wrap' },
+    h('div', { class: 'dev-line' }, h('span', {}, 'Developer:'), ' ', h('span', { class: 'dev-name' }, DEV.name)),
     h('div', { class: 'about-links' }, links),
     h('div', { class: 'foot-meta' }, h('span', {}, `© ${new Date().getFullYear()} ${DEV.name}`))));
+}
+
+/* ================= Handwritten font for the developer name ================= */
+// Loaded after the page is drawn, so it never delays the first paint. If it cannot load, the name falls back to italic.
+function loadSignatureFont() {
+  if (document.getElementById('script-font')) return;
+  const link = document.createElement('link');
+  link.id = 'script-font';
+  link.rel = 'stylesheet';
+  link.href = 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap';
+  link.media = 'print'; // a print-only sheet does not block drawing; it is switched on once it has arrived
+  link.addEventListener('load', () => { link.media = 'all'; });
+  link.addEventListener('error', () => document.documentElement.classList.add('script-font-failed'));
+  document.head.append(link);
 }
 
 /* ================= Header dropdown ================= */
@@ -237,3 +252,4 @@ function initMenu() {
 hydrateIcons();
 initMenu();
 renderFooter();
+if (document.readyState === 'complete') loadSignatureFont(); else window.addEventListener('load', loadSignatureFont, { once: true });
