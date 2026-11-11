@@ -200,7 +200,6 @@ function renderFooter() {
         h('p', {}, `${DEV.role}. I built this hub. Check my work or get in touch.`)),
       h('div', { class: 'about-links' }, links)),
     h('div', { class: 'foot-meta' },
-      h('span', {}, 'Harry Pass Polytechnic, Gboko, Benue State'),
       h('span', {}, `© ${new Date().getFullYear()} `, h('span', { class: 'dev-name' }, DEV.name)))));
 }
 

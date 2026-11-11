@@ -10,8 +10,8 @@ const SUBSCRIBE_PATH = ROLE === 'admin' ? '/api/push/subscribe-admin' : '/api/pu
 const DISMISS_KEY = 'hp-push-dismissed'; // sessionStorage: the bar is hidden for this visit only, and returns next visit
 const SYNC_KEY = 'hp-push-synced';
 const COPY = {
-  student: 'Get an alert when a new handout or past question is posted, with the course and a link straight to it.',
-  admin: 'Get an alert on this device when students send new photos.',
+  student: 'Get a notification when a new handout or past question is uploaded.',
+  admin: 'Get a notification when students send new photos.',
 };
 
 const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -54,8 +54,7 @@ function showBar({ blocked }) {
   const bar = h('div', { class: 'notify-bar', role: 'region', 'aria-label': 'Notifications' },
     h('span', { class: 'notify-ico' }, icon('bell')),
     h('div', { class: 'notify-text' },
-      h('strong', {}, blocked ? 'Notifications are blocked' : 'Turn on notifications'),
-      h('small', {}, blocked ? 'Allow notifications for this site in your browser settings, then reload this page.' : COPY[ROLE])),
+      h('small', {}, blocked ? 'Allow notifications from this site in your browser settings.' : COPY[ROLE])),
     !blocked && h('label', { class: 'switch' }, input, h('span', { class: 'switch-track', 'aria-hidden': 'true' })),
     h('button', { class: 'notify-close', type: 'button', 'aria-label': 'Hide for now', onclick: () => { store.set(DISMISS_KEY, '1'); bar.remove(); } }, icon('x')));
   document.body.append(bar);
@@ -73,7 +72,7 @@ function showBar({ blocked }) {
       }
       await subscribe();
       bar.remove();
-      toast('success', 'Notifications are on', ROLE === 'admin' ? 'You will be alerted when students send photos.' : 'You will be alerted when new materials are posted.');
+      toast('success', 'Notifications are on', ROLE === 'admin' ? 'You will be notified when students send photos.' : 'You will be notified when new materials are upload.');
     } catch (err) {
       input.checked = false;
       input.disabled = false;
