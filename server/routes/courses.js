@@ -128,6 +128,26 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ courses: data });
 }));
 
+/** How many files (past questions and handouts) each level has. Used by the small number badge on the home page. */
+router.get('/counts', asyncHandler(async (_req, res) => {
+  const counts = await cached('counts', async () => {
+    const { data: courses, error: courseError } = await db.from('courses').select('id, level_id').limit(5000);
+    if (courseError) throw courseError;
+    const { data: rows, error } = await db.from('course_materials').select('course_id, question_url, handout_url').limit(20000);
+    if (error) throw error;
+    const levelOf = new Map(courses.map((c) => [c.id, c.level_id]));
+    const totals = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    for (const r of rows) {
+      const level = levelOf.get(r.course_id);
+      if (!level) continue;
+      if (r.question_url) totals[level] += 1;
+      if (r.handout_url) totals[level] += 1;
+    }
+    return totals;
+  });
+  res.json({ counts });
+}));
+
 router.get('/search', asyncHandler(async (req, res) => {
   // Keep only characters that are safe inside a PostgREST filter string (no commas, parens or wildcards).
   const q = String(req.query.q ?? '').replace(/[^A-Za-z0-9 -]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
