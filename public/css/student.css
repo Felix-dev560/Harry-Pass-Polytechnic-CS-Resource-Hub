@@ -405,8 +405,3 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
 
 /* ---------- No line above "N years with nothing yet": it belongs to the same course ---------- */
 .year-item:has(> .year-empty) { border-top: 0; }
-
-/* ---------- Footer: "Developer: Saawuan Felix" sits just above the link icons ---------- */
-.dev-line { display: flex; justify-content: center; align-items: baseline; gap: .4rem; margin-bottom: .1rem; color: var(--muted); font-size: .92rem; }
-.dev-line .dev-name { font-size: 1.4rem; }
-.script-font-failed .dev-name { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
