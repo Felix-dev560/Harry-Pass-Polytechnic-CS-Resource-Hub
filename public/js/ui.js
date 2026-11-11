@@ -5,7 +5,6 @@ import { h, LEVELS } from './api.js';
 /* ================= Developer details (edit the links here, once) ================= */
 const DEV = {
   name: 'Saawuan Felix',
-  role: 'Web developer',
   links: [
     { label: 'Portfolio', icon: 'globe', url: 'https://saawuanfelix.vercel.app' },
     { label: 'GitHub', icon: 'github', url: 'https://github.com/felix-dev560' },
@@ -189,18 +188,14 @@ export function confirmDialog({ title, text = '', confirm = 'Confirm', danger = 
 function renderFooter() {
   const root = document.getElementById('site-footer');
   if (!root) return;
+  // Plain icons only: the name of each link is kept as aria-label/title for screen readers and hover.
   const links = DEV.links.map((l) => {
     if (l.url.includes('YOUR_')) console.warn(`Set your ${l.label} link in js/ui.js (DEV.links).`);
-    return h('a', { class: 'pill-btn sm', href: l.url, target: '_blank', rel: 'noopener noreferrer' }, icon(l.icon), l.label);
+    return h('a', { class: 'foot-link', href: l.url, target: '_blank', rel: 'noopener noreferrer', 'aria-label': l.label, title: l.label }, icon(l.icon));
   });
   root.replaceChildren(h('div', { class: 'wrap' },
-    h('section', { class: 'about glass', 'aria-labelledby': 'about-title' },
-      h('div', {},
-        h('h2', { id: 'about-title' }, 'Developer: ', h('span', { class: 'dev-name' }, DEV.name)),
-        h('p', {}, `${DEV.role}. I built this hub. Check my work or get in touch.`)),
-      h('div', { class: 'about-links' }, links)),
-    h('div', { class: 'foot-meta' },
-      h('span', {}, `© ${new Date().getFullYear()} `, h('span', { class: 'dev-name' }, DEV.name)))));
+    h('div', { class: 'about-links' }, links),
+    h('div', { class: 'foot-meta' }, h('span', {}, `© ${new Date().getFullYear()} ${DEV.name}`))));
 }
 
 /* ================= Header dropdown ================= */
@@ -239,21 +234,6 @@ function initMenu() {
   });
 }
 
-/* ================= Signature font ================= */
-// The handwriting font is only used for the developer's name in the footer. It is requested after the page
-// has finished loading, so it can never hold up the first paint. Until it arrives the name shows in the
-// script fonts already on the device (see --font-script), then swaps once the font is ready.
-function loadSignatureFont() {
-  if (!document.getElementById('site-footer')) return;
-  const add = () => document.head.append(h('link', {
-    rel: 'stylesheet',
-    href: 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap',
-  }));
-  if (document.readyState === 'complete') add();
-  else window.addEventListener('load', add, { once: true });
-}
-
 hydrateIcons();
 initMenu();
-loadSignatureFont();
 renderFooter();

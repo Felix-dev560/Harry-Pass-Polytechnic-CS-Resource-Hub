@@ -394,3 +394,14 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
   .about-links .icon { width: .95rem; height: .95rem; }
   .course-card { margin-bottom: 0; }
 }
+
+/* ---------- Footer: plain icons right above the copyright line, no names ---------- */
+.about-links { justify-content: center; align-items: center; gap: 1.25rem; padding: 0; }
+.foot-link { display: inline-grid; place-items: center; width: 2rem; height: 2rem; color: var(--muted); border-radius: 50%; transition: color .15s ease; }
+.foot-link:hover, .foot-link:focus-visible { color: var(--ink); }
+.foot-link .icon { width: 1.35rem; height: 1.35rem; }
+.foot-meta { margin-top: .35rem; }
+.foot-meta span { font-family: inherit; }
+
+/* ---------- No line above "N years with nothing yet": it belongs to the same course ---------- */
+.year-item:has(> .year-empty) { border-top: 0; }
