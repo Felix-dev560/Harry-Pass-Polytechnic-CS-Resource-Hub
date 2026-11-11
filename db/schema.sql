@@ -19,6 +19,10 @@ create table if not exists admins (
   created_at     timestamptz not null default now()
 );
 
+-- Raised every time the admin password changes. Sessions carry the number they were created with,
+-- so raising it signs out every other device. Safe to re-run.
+alter table admins add column if not exists session_version integer not null default 0;
+
 create table if not exists courses (
   id            serial primary key,
   level_id      smallint not null references levels(id),

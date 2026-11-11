@@ -12,6 +12,7 @@ cloudinary.config({ ...config.cloudinary, secure: true });
 
 const router = express.Router();
 const SEMESTERS = ['First', 'Second'];
+const FIRST_YEAR = 2021; // same first year as the course pages
 const MAX_BYTES = 4 * 1024 * 1024; // Vercel rejects request bodies above about 4.5 MB
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: MAX_BYTES, files: 1, fields: 7 } });
 
@@ -54,8 +55,8 @@ router.post('/', submitLimiter, upload.single('image'), asyncHandler(async (req,
 
   const course_title = String(req.body?.course_title ?? '').trim().slice(0, 150) || null;
   const year = Number(req.body?.year);
-  if (!Number.isInteger(year) || year < 2015 || year > new Date().getFullYear() + 1) {
-    throw new HttpError(400, 'Enter the year as four digits, for example 2023.');
+  if (!Number.isInteger(year) || year < FIRST_YEAR || year > new Date().getFullYear() + 1) {
+    throw new HttpError(400, `Enter a year from ${FIRST_YEAR} to ${new Date().getFullYear()}.`);
   }
 
   let uploaded;

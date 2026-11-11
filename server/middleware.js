@@ -1,6 +1,7 @@
 'use strict';
 const jwt = require('jsonwebtoken');
 const config = require('./config');
+const db = require('./database');
 
 const COOKIE_NAME = 'hp_admin';
 const SESSION_MS = 8 * 60 * 60 * 1000; // normal sign in: 8 hours, and the cookie ends when the browser closes
@@ -29,24 +30,33 @@ function cookieOptions(remember = false) {
   return options;
 }
 
+// `v` is the admin's session_version. Changing the password raises it, which makes every older token invalid.
+// `rem` remembers whether this was a "keep me signed in" session, so a new token can keep the same lifetime.
 function issueSession(res, admin, remember = false) {
-  const token = jwt.sign({ sub: admin.id, email: admin.email }, config.jwtSecret, {
+  const token = jwt.sign({ sub: admin.id, email: admin.email, v: admin.session_version ?? 0, rem: remember }, config.jwtSecret, {
     algorithm: 'HS256',
     expiresIn: Math.round((remember ? REMEMBER_MS : SESSION_MS) / 1000),
   });
   res.cookie(COOKIE_NAME, token, cookieOptions(remember));
 }
 
-function requireAdmin(req, _res, next) {
+// Checks the cookie AND the database: the admin must still exist and the token's session version must match.
+// That is what ends old sessions after a password change, and rejects tokens left over from a reset database.
+const requireAdmin = asyncHandler(async (req, _res, next) => {
   const token = req.cookies?.[COOKIE_NAME];
-  if (!token) return next(new HttpError(401, 'Sign in required.'));
+  if (!token) throw new HttpError(401, 'Sign in required.');
+  let payload;
   try {
     // Pin the algorithm so a forged "alg: none" token is rejected.
-    req.admin = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
-    return next();
+    payload = jwt.verify(token, config.jwtSecret, { algorithms: ['HS256'] });
   } catch {
-    return next(new HttpError(401, 'Session expired. Sign in again.'));
+    throw new HttpError(401, 'Session expired. Sign in again.');
   }
-}
+  const { data: admin, error } = await db.from('admins').select('id, email, session_version').eq('id', payload.sub).maybeSingle();
+  if (error) throw error;
+  if (!admin || admin.session_version !== (payload.v ?? 0)) throw new HttpError(401, 'Session expired. Sign in again.');
+  req.admin = { sub: admin.id, email: admin.email, version: admin.session_version, remember: payload.rem === true };
+  next();
+});
 
 module.exports = { COOKIE_NAME, asyncHandler, HttpError, issueSession, requireAdmin, cookieOptions };

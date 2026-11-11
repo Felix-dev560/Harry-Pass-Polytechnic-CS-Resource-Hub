@@ -670,7 +670,7 @@ passwordForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const next = $('p-new').value;
   const again = $('p-confirm').value;
-  if (next.length < 4) return toast('error', 'Password is too short', 'Use at least 4 characters.');
+  if (next.length < 8) return toast('error', 'Password is too short', 'Use at least 8 characters.');
   if (next !== again) return toast('error', 'Passwords do not match', 'Type the same new password in both boxes.');
   const btn = $('password-save');
   setBusy(btn, true);
@@ -678,7 +678,7 @@ passwordForm.addEventListener('submit', async (event) => {
     await api('/api/auth/password', { method: 'PUT', body: { password: next, confirm_password: again } });
     passwordForm.reset();
     resetPasswordEyes();
-    toast('success', 'Password changed', 'Use the new password the next time you sign in.');
+    toast('success', 'Password changed', 'Every other device was signed out. Use the new password next time you sign in.');
   } catch (err) { handleError(err, 'Could not change the password'); } finally { setBusy(btn, false); }
 });
 

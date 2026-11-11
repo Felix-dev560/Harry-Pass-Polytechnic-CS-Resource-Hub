@@ -59,6 +59,7 @@
               </div>
               <div class="auth-options">
                 <label class="check"><input type="checkbox" name="remember" value="1"> Keep me signed in</label>
+                <a class="auth-link" href="reset.html">Forgot password?</a>
               </div>
               <button class="auth-submit" type="submit">
                 <span>Sign in</span>
@@ -76,6 +77,17 @@
             </header>
 
             <form id="register-form" novalidate>
+              <div class="field">
+                <div class="control control-password">
+                  <svg class="icon field-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg>
+                  <input id="reg-setupkey" name="setup_key" type="password" placeholder=" " autocomplete="off" autocapitalize="none" spellcheck="false" required>
+                  <label for="reg-setupkey">Setup key</label>
+                  <button type="button" class="toggle-password" aria-label="Show password" aria-pressed="false">
+                    <svg class="icon icon-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    <svg class="icon icon-eye-off" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  </button>
+                </div>
+              </div>
               <div class="auth-row two">
                 <div class="field">
                   <div class="control">

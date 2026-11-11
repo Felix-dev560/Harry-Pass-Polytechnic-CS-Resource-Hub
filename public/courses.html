@@ -6,7 +6,6 @@
 <title>Courses | Harry Pass CS Hub</title>
 <meta name="color-scheme" content="light dark">
 <script src="js/theme.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap">
 <link rel="stylesheet" href="css/style.css">
 <link rel="stylesheet" href="css/student.css">
 </head>
@@ -14,7 +13,7 @@
 
 <header class="topbar"><div class="wrap">
   <div class="top-left">
-    <a class="icon-btn" id="back" href="index.html" aria-label="Back to semesters"><i data-icon="arrow-left"></i></a>
+    <a class="icon-btn" id="back" href="index.html" aria-label="Back to home"><i data-icon="arrow-left"></i></a>
     <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
   </div>
   <div class="menu-wrap">
@@ -29,7 +28,11 @@
 <main><div class="wrap">
   <div class="page-head">
     <h1 id="page-title">Courses</h1>
-    
+  </div>
+
+  <div class="seg" role="group" aria-label="Semester">
+    <button type="button" class="seg-btn" data-semester="First" aria-pressed="true">First semester</button>
+    <button type="button" class="seg-btn" data-semester="Second" aria-pressed="false">Second semester</button>
   </div>
 
   <div class="filter-bar" id="filter-bar" hidden>

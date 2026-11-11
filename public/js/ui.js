@@ -239,6 +239,21 @@ function initMenu() {
   });
 }
 
+/* ================= Signature font ================= */
+// The handwriting font is only used for the developer's name in the footer. It is requested after the page
+// has finished loading, so it can never hold up the first paint. Until it arrives the name shows in the
+// script fonts already on the device (see --font-script), then swaps once the font is ready.
+function loadSignatureFont() {
+  if (!document.getElementById('site-footer')) return;
+  const add = () => document.head.append(h('link', {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap',
+  }));
+  if (document.readyState === 'complete') add();
+  else window.addEventListener('load', add, { once: true });
+}
+
 hydrateIcons();
 initMenu();
+loadSignatureFont();
 renderFooter();

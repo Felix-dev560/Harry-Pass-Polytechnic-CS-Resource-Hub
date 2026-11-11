@@ -88,10 +88,10 @@ registerForm.addEventListener('submit', async (event) => {
   const body = Object.fromEntries(data);
   delete body.confirm_password;
 
-  if (!body.first_name.trim() || !body.last_name.trim() || !body.email.trim() || !body.password) {
+  if (!body.setup_key.trim() || !body.first_name.trim() || !body.last_name.trim() || !body.email.trim() || !body.password) {
     return setStatus(status, 'Fill in every field.', 'error');
   }
-  if (body.password.length < 4) return setStatus(status, 'Password must be at least 4 characters.', 'error');
+  if (body.password.length < 8) return setStatus(status, 'Password must be at least 8 characters.', 'error');
   if (body.password !== data.get('confirm_password')) return setStatus(status, 'Passwords do not match.', 'error');
 
   setBusy(registerForm, true);

@@ -8,6 +8,36 @@ const { notifyRole } = require('../push');
 
 cloudinary.config({ ...config.cloudinary, secure: true });
 
+/** Turns a link to a file this site uploaded (folder harrypass/materials on our own Cloudinary account) into
+ *  its public_id. Any other link returns null, so only files uploaded by the dashboard can ever be deleted. */
+function materialFile(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol !== 'https:' || u.hostname !== 'res.cloudinary.com') return null;
+    const parts = u.pathname.split('/').filter(Boolean); // cloud, resource type, "upload", [version], folder, ..., file
+    const [cloud, type, mode] = parts;
+    if (cloud !== config.cloudinary.cloud_name || mode !== 'upload' || !['raw', 'image'].includes(type)) return null;
+    const at = parts.indexOf('harrypass');
+    if (at < 3 || parts[at + 1] !== 'materials' || parts.length < at + 3) return null;
+    let publicId = decodeURIComponent(parts.slice(at).join('/'));
+    if (type === 'image') publicId = publicId.replace(/\.[A-Za-z0-9]+$/, ''); // images are stored without the extension; raw files keep it
+    return { publicId, type };
+  } catch { return null; }
+}
+
+/** Deletes uploaded files from Cloudinary. Best effort: a failure is logged and never fails the admin's request. */
+async function removeFiles(urls) {
+  const files = [...new Set(urls.filter(Boolean))].map(materialFile).filter(Boolean);
+  await Promise.all(files.map(async ({ publicId, type }) => {
+    try {
+      const result = await cloudinary.uploader.destroy(publicId, { resource_type: type, invalidate: true });
+      if (result.result !== 'ok' && result.result !== 'not found') console.error('Cloudinary delete said:', publicId, result.result);
+    } catch (err) {
+      console.error('Cloudinary delete failed:', publicId, err);
+    }
+  }));
+}
+
 const router = express.Router();
 const SEMESTERS = ['First', 'Second'];
 const FIRST_YEAR = 2021;
@@ -153,9 +183,13 @@ router.put('/:id', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 router.delete('/:id', requireAdmin, asyncHandler(async (req, res) => {
-  // course_materials rows are removed by the foreign key's ON DELETE CASCADE.
-  const { error } = await db.from('courses').delete().eq('id', parseId(req.params.id));
+  const id = parseId(req.params.id);
+  // Remember the files first: the rows are removed with the course (ON DELETE CASCADE), and the files must go too.
+  const { data: rows, error: readError } = await db.from('course_materials').select('question_url, handout_url').eq('course_id', id);
+  if (readError) throw readError;
+  const { error } = await db.from('courses').delete().eq('id', id);
   if (error) throw error;
+  await removeFiles((rows ?? []).flatMap((r) => [r.question_url, r.handout_url]));
   res.json({ ok: true });
 }));
 
@@ -187,6 +221,8 @@ router.put('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) =
     if (error.code === '23505') throw new HttpError(409, `This course already has a post in ${year}. Open that year from the Posts list and edit it instead.`);
     throw error;
   }
+  // A file that was on this year and is no longer used (replaced or removed) is deleted from Cloudinary.
+  await removeFiles([before?.question_url, before?.handout_url].filter((u) => u && u !== row.question_url && u !== row.handout_url));
   // Replacing or removing a file, or editing a note, is not announced. Only a document that was not there before is.
   const added = [];
   if (row.handout_url && !before?.handout_url) added.push('handout');
@@ -196,9 +232,14 @@ router.put('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) =
 }));
 
 router.delete('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) => {
-  const { error } = await db.from('course_materials').delete()
-    .eq('course_id', parseId(req.params.id)).eq('year', parseId(req.params.year, 'year'));
+  const course_id = parseId(req.params.id);
+  const year = parseId(req.params.year, 'year');
+  const { data: old, error: readError } = await db.from('course_materials')
+    .select('question_url, handout_url').eq('course_id', course_id).eq('year', year).maybeSingle();
+  if (readError) throw readError;
+  const { error } = await db.from('course_materials').delete().eq('course_id', course_id).eq('year', year);
   if (error) throw error;
+  if (old) await removeFiles([old.question_url, old.handout_url]);
   res.json({ ok: true });
 }));
 

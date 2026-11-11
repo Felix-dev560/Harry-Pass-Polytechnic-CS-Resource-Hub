@@ -1,4 +1,4 @@
-import { api, setStatus, h, currentYear } from './api.js';
+import { api, setStatus, h, currentYear, FIRST_YEAR } from './api.js';
 import { icon, toast } from './ui.js';
 
 const form = document.getElementById('contribute-form');
@@ -12,6 +12,7 @@ const previewCount = document.getElementById('preview-count');
 const MAX_FILES = 20;
 const MAX_BYTES = 4 * 1024 * 1024;
 const CODE_RE = /^[A-Za-z]{2,5}[\s-]?\d{3}$/;
+form.elements.year.min = FIRST_YEAR; // the hub starts at 2021, the same year the course pages start at
 form.elements.year.max = currentYear();
 
 let selected = []; // [{ file, url }]
@@ -99,7 +100,7 @@ form.addEventListener('submit', async (event) => {
   if (!CODE_RE.test(form.elements.course_code.value.trim())) return fail('Course code looks like COM 111.');
   if (!['First', 'Second'].includes(form.elements.semester.value)) return fail('Choose the semester, First or Second.');
   const year = Number(form.elements.year.value);
-  if (!Number.isInteger(year) || year < 2015 || year > currentYear() + 1) return fail('Enter the year as four digits, for example 2023.');
+  if (!Number.isInteger(year) || year < FIRST_YEAR || year > currentYear()) return fail(`Enter a year from ${FIRST_YEAR} to ${currentYear()}.`);
 
   button.disabled = true;
   button.classList.add('is-loading');

@@ -118,6 +118,14 @@ body.auth-body { overflow-x: clip; }
 .check { display: flex; align-items: center; gap: .6rem; margin: 0; color: var(--muted); font-size: .95rem; font-weight: 600; cursor: pointer; }
 .check input { flex: none; width: 1.2rem; height: 1.2rem; min-height: 0; margin: 0; padding: 0; accent-color: var(--ink); }
 
+/* ---------- Links and the single-panel reset page ---------- */
+.auth-link { color: var(--muted); font-size: .95rem; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; transition: color .15s ease; }
+.auth-link:hover { color: var(--ink); }
+.auth-sub { margin: 0; color: var(--muted); font-size: .95rem; }
+.auth-foot { margin: 1rem 0 0; text-align: center; }
+.auth-single .auth-track { width: 100%; }
+.auth-single .auth-panel { flex-basis: 100%; }
+
 /* ---------- Submit and status ---------- */
 .auth-submit {
   display: flex; align-items: center; justify-content: center; gap: .6rem; width: 100%; min-height: 3.25rem; margin-top: .25rem;

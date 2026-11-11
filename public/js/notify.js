@@ -72,7 +72,7 @@ function showBar({ blocked }) {
       }
       await subscribe();
       bar.remove();
-      toast('success', 'Notifications are on', ROLE === 'admin' ? 'You will be notified when students send photos.' : 'You will be notified when new materials are upload.');
+      toast('success', 'Notifications are on', ROLE === 'admin' ? 'You will be notified when students send photos.' : 'You will be notified when new materials are uploaded.');
     } catch (err) {
       input.checked = false;
       input.disabled = false;
