@@ -27,6 +27,15 @@ function keyToBytes(base64) {
   return Uint8Array.from(raw, (c) => c.charCodeAt(0));
 }
 
+
+/** Rejects if a promise takes too long, so a stuck push service can never leave the toggle hanging. */
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('This is taking too long. Check your connection and try again.')), ms)),
+  ]);
+}
+
 let registration;
 async function worker() {
   registration ??= await navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(() => navigator.serviceWorker.ready);
@@ -70,13 +79,14 @@ function showBar({ blocked }) {
         if (result === 'denied') { bar.remove(); showBar({ blocked: true }); }
         return;
       }
-      await subscribe();
+      // Permission is granted, so the toggle has done its job: the bar goes away right now.
       bar.remove();
+      await withTimeout(subscribe(), 20000);
       toast('success', 'Notifications are on', ROLE === 'admin' ? 'You will be notified when students send photos.' : 'You will be notified when new materials are uploaded.');
     } catch (err) {
-      input.checked = false;
-      input.disabled = false;
+      // Saving this device failed. Tell the person and bring the bar back so they can try again.
       toast('error', 'Could not turn on notifications', err.message);
+      showBar({ blocked: false });
     }
   });
 }
