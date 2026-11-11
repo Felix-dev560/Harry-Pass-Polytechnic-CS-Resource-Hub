@@ -1,4 +1,4 @@
-import { api, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from './api.js';
+import { api, apiCached, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from './api.js';
 import { icon, toast, tokens, matches, highlight, bindSearch, downloadUrl, viewUrl } from './ui.js';
 
 const params = new URLSearchParams(location.search);
@@ -157,6 +157,24 @@ for (const btn of toggleButtons) {
   });
 }
 
+/** Builds the course list from the data. Runs once from the saved copy (if any) and again only if the server's copy differs. */
+let wired = false;
+function build(courses) {
+  bySemester.First = [];
+  bySemester.Second = [];
+  for (const course of courses) bySemester[course.semester]?.push(courseItem(course));
+  // A link to one course (search result, notification) opens the semester that course is in.
+  const wanted = courses.find((c) => String(c.id) === String(Number(focusId)));
+  if (wanted && !loaded) semester = wanted.semester;
+  const firstBuild = !loaded;
+  loaded = true;
+  $('filter-bar').hidden = false;
+  if (!wired) { bindSearch($('filter'), $('filter-clear'), applyFilter); wired = true; }
+  showSemester({ updateUrl: false });
+  const target = firstBuild && focusId && document.getElementById(`course-${Number(focusId)}`);
+  if (target) { target.open = true; target.scrollIntoView({ block: 'start' }); }
+}
+
 async function init() {
   if (!Object.hasOwn(LEVELS, level)) {
     location.replace('index.html');
@@ -167,17 +185,8 @@ async function init() {
   syncToggle();
 
   try {
-    const { courses } = await api(`/api/courses?level=${level}`);
-    for (const course of courses) bySemester[course.semester]?.push(courseItem(course));
-    // A link to one course (search result, notification) opens the semester that course is in.
-    const wanted = courses.find((c) => String(c.id) === String(Number(focusId)));
-    if (wanted) semester = wanted.semester;
-    loaded = true;
-    $('filter-bar').hidden = false;
-    bindSearch($('filter'), $('filter-clear'), applyFilter);
-    showSemester({ updateUrl: false });
-    const target = focusId && document.getElementById(`course-${Number(focusId)}`);
-    if (target) { target.open = true; target.scrollIntoView({ block: 'start' }); }
+    // The list from the last visit shows instantly; the server's copy replaces it only if something changed.
+    await apiCached(`/api/courses?level=${level}`, ({ courses }) => build(courses));
   } catch (err) {
     listEl.replaceChildren(h('div', { class: 'empty-state glass' },
       h('span', { class: 'tile-ico' }, icon('alert-triangle')), h('p', {}, err.message)));

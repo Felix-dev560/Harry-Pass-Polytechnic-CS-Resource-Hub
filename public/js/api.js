@@ -29,6 +29,26 @@ export async function api(path, { method = 'GET', body, formData, signal } = {})
   return data;
 }
 
+/** Stale-while-revalidate GET for public data. Calls render(data) at once with the copy saved from the last visit
+ *  (if any), then again with the fresh server copy when it differs. Resolves when the fresh copy has arrived. */
+export async function apiCached(path, render) {
+  const key = `hp-cache:${path}`;
+  let saved = null;
+  try { saved = localStorage.getItem(key); } catch { /* storage blocked: just no instant copy */ }
+  let shown = null;
+  if (saved) {
+    try { render(JSON.parse(saved), { fromCache: true }); shown = saved; } catch { shown = null; }
+  }
+  try {
+    const fresh = await api(path);
+    const text = JSON.stringify(fresh);
+    try { localStorage.setItem(key, text); } catch { /* storage full or blocked */ }
+    if (text !== shown) render(fresh, { fromCache: false });
+  } catch (err) {
+    if (shown === null) throw err; // nothing on screen yet: let the caller show the error
+  }
+}
+
 /** h('a', { href: '#', class: 'btn' }, 'Text', childNode) */
 export function h(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);

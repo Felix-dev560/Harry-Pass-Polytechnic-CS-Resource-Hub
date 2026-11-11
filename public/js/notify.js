@@ -96,4 +96,6 @@ async function check() {
   showBar({ blocked: Notification.permission === 'denied' });
 }
 
-check();
+// Waits until the page has finished loading, so the service worker and the bar never compete with the first paint.
+if (document.readyState === 'complete') check();
+else window.addEventListener('load', check, { once: true });
