@@ -29,7 +29,7 @@
 <main><div class="wrap">
   <div class="page-head">
     <h1>Share an old paper or handout</h1>
-    <p>Take clear photos of a question paper or handout you have. You can send up to 20 photos at once. An admin checks them and adds them to the course. Submissions are anonymous.</p>
+    <p>Take clear photos of a question paper or handout you have. You can send up to 20 photos at once. Saawuan Felix checks convert to text document and add them to the course.</p>
   </div>
 
   <form class="glass form-glass" id="contribute-form" novalidate>
@@ -37,7 +37,7 @@
       <label class="dropzone" id="dropzone" for="image">
         <span class="dropzone-ico"><i data-icon="camera"></i></span>
         <strong>Take or choose photos</strong>
-        <span class="hint">Up to 20 at once, for example every page of one paper. JPEG, PNG or WebP. Lay each page flat in good light.</span>
+        <span class="hint">Up to 20 at once, for example every page of one paper. JPEG or PNG</span>
         <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp" multiple>
       </label>
       <div id="preview" hidden>
@@ -58,7 +58,7 @@
         <div class="control">
           <i data-icon="calendar" class="field-icon"></i>
           <input id="year" name="year" type="number" min="2015" placeholder=" " inputmode="numeric" required>
-          <label for="year">Year, e.g. 2023</label>
+          <label for="year">Year</label>
         </div>
       </div>
     </div>
@@ -77,16 +77,17 @@
       <div class="control">
         <i data-icon="book-open" class="field-icon"></i>
         <input id="course_title" name="course_title" type="text" placeholder=" " maxlength="150" autocomplete="off">
-        <label for="course_title">Course title (optional)</label>
+        <label for="course_title">Course title </label>
       </div>
     </div>
 
     <div class="trap" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" name="website" type="text" tabindex="-1" autocomplete="off"></div>
-    <button class="pill-btn primary btn-block" type="submit"><i data-icon="upload"></i>Send photos</button>
+    <button class="pill-btn primary btn-block" type="submit">Send photos</button>
     <p id="form-status" class="status" role="status"></p>
   </form>
 </div></main>
 
 <footer class="site-foot" id="site-footer"></footer>
 <script type="module" src="js/contribute.js"></script>
+<script type="module" src="js/notify.js"></script>
 </body></html>

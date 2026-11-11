@@ -4,6 +4,7 @@ const { v2: cloudinary } = require('cloudinary');
 const db = require('../database');
 const config = require('../config');
 const { asyncHandler, HttpError, requireAdmin } = require('../middleware');
+const { notifyRole } = require('../push');
 
 cloudinary.config({ ...config.cloudinary, secure: true });
 
@@ -11,6 +12,21 @@ const router = express.Router();
 const SEMESTERS = ['First', 'Second'];
 const FIRST_YEAR = 2021;
 const MAX_NOTE_LENGTH = 50000;
+const LEVEL_NAMES = { 1: 'ND 1', 2: 'ND 2', 3: 'HND 1', 4: 'HND 2' };
+
+/** Tells every subscribed student what was posted, and where to find it. `kinds` is ['handout'], ['past question'] or both. */
+async function announceMaterial(course_id, year, kinds) {
+  const { data: course } = await db.from('courses')
+    .select('id, level_id, semester, course_code, course_title').eq('id', course_id).maybeSingle();
+  if (!course) return;
+  const what = kinds.length === 2 ? 'Handout and past question' : `${kinds[0][0].toUpperCase()}${kinds[0].slice(1)}`;
+  await notifyRole('student', {
+    title: `New ${what.toLowerCase()} posted`,
+    body: `${course.course_code}: ${course.course_title}\n${LEVEL_NAMES[course.level_id]}, ${course.semester} semester, ${year}`,
+    url: `/courses.html?level=${course.level_id}&semester=${course.semester}&focus=${course.id}&year=${year}`,
+    tag: `material-${course.id}-${year}`,
+  });
+}
 
 // Short in-memory cache for public reads, so repeat visits skip the database round trip.
 // Every write clears it, so students see admin changes right away on this server instance.
@@ -160,6 +176,10 @@ router.put('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) =
   // create: true means "add a new year". It never overwrites, so a year that already has a post is refused.
   // Without it, the call edits that year in place (upsert).
   const creating = req.body?.create === true;
+  // What this year already had, so only a document that was missing before counts as "newly posted".
+  const { data: before, error: beforeError } = await db.from('course_materials')
+    .select('question_url, handout_url').eq('course_id', course_id).eq('year', year).maybeSingle();
+  if (beforeError) throw beforeError;
   const query = db.from('course_materials');
   const { data, error } = await (creating ? query.insert(row) : query.upsert(row, { onConflict: 'course_id,year' })).select().single();
   if (error) {
@@ -167,6 +187,11 @@ router.put('/:id/materials/:year', requireAdmin, asyncHandler(async (req, res) =
     if (error.code === '23505') throw new HttpError(409, `This course already has a post in ${year}. Open that year from the Posts list and edit it instead.`);
     throw error;
   }
+  // Replacing or removing a file, or editing a note, is not announced. Only a document that was not there before is.
+  const added = [];
+  if (row.handout_url && !before?.handout_url) added.push('handout');
+  if (row.question_url && !before?.question_url) added.push('past question');
+  if (added.length) await announceMaterial(course_id, year, added);
   res.json({ material: data });
 }));
 

@@ -58,3 +58,22 @@ alter table admins               enable row level security;
 alter table courses              enable row level security;
 alter table course_materials     enable row level security;
 alter table student_submissions  enable row level security;
+
+-- ---- Push notifications (safe to re-run) ----
+-- One row per browser/device that switched notifications on. role is 'admin' (subscribed while signed in
+-- on the dashboard) or 'student'. endpoint is unique, so a device never gets the same notification twice.
+create table if not exists push_subscriptions (
+  id          serial primary key,
+  endpoint    text not null unique,
+  p256dh      text not null,
+  auth        text not null,
+  role        text not null default 'student' check (role in ('admin','student')),
+  created_at  timestamptz not null default now()
+);
+create index if not exists push_subscriptions_role_idx on push_subscriptions (role);
+alter table push_subscriptions enable row level security;
+
+-- Marks photos the admin has already been notified about, so one batch of photos gives one notification.
+alter table student_submissions add column if not exists notified boolean not null default false;
+-- Photos that were already waiting before this feature existed should not trigger a notification later.
+update student_submissions set notified = true where notified = false and submitted_at < now() - interval '1 minute';

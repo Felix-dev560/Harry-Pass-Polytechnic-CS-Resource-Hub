@@ -125,6 +125,12 @@ form.addEventListener('submit', async (event) => {
     button.classList.remove('is-loading');
   }
 
+  // One alert to the admin for the whole batch, not one per photo.
+  if (sent.size > 0) {
+    const batch = Object.fromEntries(['course_code', 'semester', 'year'].map((name) => [name, form.elements[name].value]));
+    api('/api/submissions/notify', { method: 'POST', body: batch }).catch(() => {});
+  }
+
   for (const item of selected) if (sent.has(item)) URL.revokeObjectURL(item.url);
   selected = selected.filter((item) => !sent.has(item));
   renderPreview();

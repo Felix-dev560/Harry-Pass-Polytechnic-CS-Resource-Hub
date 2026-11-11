@@ -50,6 +50,8 @@ $('menu').addEventListener('click', (e) => {
   if (item) showView(item.dataset.view);
 });
 showView(location.hash.slice(1));
+// A notification tap on an already-open dashboard only changes the #hash, so follow it.
+window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
 
 // ---------- Uploading documents ----------
 /** Uploads straight from the browser to Cloudinary with a server-signed request (no Vercel body limit).

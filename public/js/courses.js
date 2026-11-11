@@ -5,6 +5,7 @@ const params = new URLSearchParams(location.search);
 const level = params.get('level');
 const semester = params.get('semester');
 const focusId = params.get('focus');
+const focusYear = Number(params.get('year')) || null; // set by a notification link, to land on one year of the course
 const $ = (id) => document.getElementById(id);
 const listEl = $('course-list');
 let items = [];
@@ -48,7 +49,7 @@ function renderYears(course, materials) {
   for (let y = currentYear(); y >= FIRST_YEAR; y--) years.push(y);
   return h('ul', { class: 'years' }, years.map((y) => {
     const m = byYear.get(y);
-    return h('li', { class: 'year-card' },
+    return h('li', { class: 'year-card', id: `year-${course.id}-${y}` },
       h('h3', {}, icon('calendar'), y),
       resource('question', course, y, m?.question_url, m?.status_note),
       resource('handout', course, y, m?.handout_url, m?.status_note));
@@ -69,6 +70,11 @@ function courseItem(course) {
     try {
       const { materials } = await api(`/api/courses/${course.id}/materials`);
       body.replaceChildren(renderYears(course, materials));
+      // Arrived from a notification: scroll to the year that was posted and mark it.
+      if (focusYear && String(course.id) === String(Number(focusId))) {
+        const card = document.getElementById(`year-${course.id}-${focusYear}`);
+        if (card) { card.classList.add('is-target'); card.scrollIntoView({ block: 'center' }); }
+      }
     } catch (err) {
       loaded = false; // allow retry on next open
       body.replaceChildren(h('p', { class: 'res-empty' }, icon('alert-triangle'), err.message));

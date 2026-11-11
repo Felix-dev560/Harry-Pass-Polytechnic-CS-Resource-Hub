@@ -6,6 +6,7 @@ const { v2: cloudinary } = require('cloudinary');
 const db = require('../database');
 const config = require('../config');
 const { asyncHandler, HttpError, requireAdmin } = require('../middleware');
+const { notifyRole } = require('../push');
 
 cloudinary.config({ ...config.cloudinary, secure: true });
 
@@ -74,6 +75,43 @@ router.post('/', submitLimiter, upload.single('image'), asyncHandler(async (req,
     throw error;
   }
   res.status(201).json({ ok: true });
+}));
+
+// The Contribute page calls this once, after the last photo of a batch is stored (not once per photo).
+// Photos are marked notified in one atomic update, so repeated or forged calls find nothing new and send nothing.
+const notifyLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 30,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many requests. Try again later.' },
+});
+
+router.post('/notify', notifyLimiter, asyncHandler(async (req, res) => {
+  const codeMatch = /^([A-Za-z]{2,5})[\s-]?(\d{3})$/.exec(String(req.body?.course_code ?? '').trim());
+  const semester = String(req.body?.semester ?? '').trim();
+  const year = Number(req.body?.year);
+  if (!codeMatch || !SEMESTERS.includes(semester) || !Number.isInteger(year)) throw new HttpError(400, 'Invalid batch.');
+  const course_code = `${codeMatch[1].toUpperCase()} ${codeMatch[2]}`;
+
+  const since = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await db.from('student_submissions')
+    .update({ notified: true })
+    .eq('course_code', course_code).eq('semester', semester).eq('year', year)
+    .eq('notified', false).gte('submitted_at', since)
+    .select('id');
+  if (error) throw error;
+
+  const count = data?.length ?? 0;
+  if (count > 0) {
+    await notifyRole('admin', {
+      title: count === 1 ? 'New photo from a student' : `${count} new photos from a student`,
+      body: `${course_code}, ${semester} semester, ${year}. Tap to review.`,
+      url: '/admin/dashboard.html#submissions',
+      tag: `photos-${course_code.replace(' ', '')}-${semester}-${year}`,
+    });
+  }
+  res.json({ ok: true });
 }));
 
 router.get('/', requireAdmin, asyncHandler(async (_req, res) => {

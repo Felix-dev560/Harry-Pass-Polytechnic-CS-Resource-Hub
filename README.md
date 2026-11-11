@@ -47,6 +47,25 @@ Push to GitHub, import the repo in Vercel, add the environment variables, deploy
 4. Dashboard > Student photos: photos are grouped by course code, semester and year. Download them, convert
    them to text offline, save the text as the course material, then delete them permanently.
 
+## 7. Notifications (Web Push)
+Needs one extra setup step.
+1. Run `npm install` (adds `web-push`).
+2. Generate keys once: `npx web-push generate-vapid-keys`. Put them in `.env` (and in Vercel's Environment Variables) as
+   `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` (for example `mailto:you@example.com`).
+3. Supabase > SQL Editor > run `db/schema.sql` again. It adds the `push_subscriptions` table and `student_submissions.notified`.
+4. Redeploy. Notifications need HTTPS, which Vercel provides (`localhost` also works for testing).
+
+How it behaves:
+- On every visit, each page checks whether the device is already set up. If not, a small bar with a toggle appears.
+  Switching it on asks the browser for permission and saves the device. After that the bar no longer shows on that device,
+  for as long as the site's data stays in the browser. The cross hides the bar for the current visit only.
+- Admin: open the dashboard and switch the toggle on. Students sending photos trigger one alert per batch (all photos sent
+  together for the same course, semester and year give a single alert). Tapping it opens Student photos.
+- Students: when you post a handout and/or past question that was not there before, every subscribed student device gets an alert
+  with the course code, title, level, semester, year and whether it is a handout, a past question, or both. Tapping it opens that
+  course with the year scrolled into view and outlined. Replacing a file or editing a note does not send an alert.
+- iPhone and iPad only deliver web notifications after the site is added to the Home Screen (Share > Add to Home Screen).
+
 ## Notes
 - Students send photos from the Contribute page. The course code, semester and year are required. The course title is optional.
 - Replace `public/assets/student-splash.jpg` with real campus photos. The 2-second splash shows when someone

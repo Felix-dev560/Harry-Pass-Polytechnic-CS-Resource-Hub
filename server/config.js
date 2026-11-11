@@ -24,6 +24,12 @@ module.exports = {
   isProd: process.env.NODE_ENV === 'production',
   port: Number(process.env.PORT) || 3000,
   jwtSecret: process.env.JWT_SECRET,
+  // Web Push keys. Optional: without them the site works normally and notifications are simply switched off.
+  vapid: {
+    publicKey: process.env.VAPID_PUBLIC_KEY || '',
+    privateKey: process.env.VAPID_PRIVATE_KEY || '',
+    subject: process.env.VAPID_SUBJECT || 'mailto:admin@example.com',
+  },
   cloudinary: {
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,

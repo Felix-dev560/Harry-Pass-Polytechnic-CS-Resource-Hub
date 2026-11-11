@@ -8,6 +8,7 @@ const config = require('./config');
 const authRoutes = require('./routes/auth');
 const courseRoutes = require('./routes/courses');
 const submissionRoutes = require('./routes/submissions');
+const pushRoutes = require('./routes/push');
 
 const app = express();
 app.disable('x-powered-by');
@@ -34,6 +35,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/submissions', submissionRoutes);
+app.use('/api/push', pushRoutes);
 app.use('/api', (_req, res) => res.status(404).json({ error: 'Not found.' }));
 
 // Local development: Express also serves the front end. On Vercel the static build is served by the CDN.
