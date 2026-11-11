@@ -373,7 +373,7 @@ function libCourse(course) {
     { icon: 'trash', label: 'Delete course', danger: true, onClick: () => removeCourse(course) },
   ]);
   const details = h('details', { class: 'lib-course' },
-    h('summary', {}, h('span', { class: 'code' }, course.course_code), h('span', { class: 'course-title' }, course.course_title), options, icon('chevron-right', 'chev')),
+    h('summary', {}, h('span', { class: 'code' }, course.course_code), h('span', { class: 'course-title' }, course.course_title), options),
     body);
   details.addEventListener('toggle', () => { if (details.open) loadPosts(course, body); });
   return { course, el: details, details, body };
@@ -649,6 +649,23 @@ async function deleteGroup(g) {
 
 // ---------- Password ----------
 const passwordForm = $('password-form');
+// Eye buttons show or hide what is typed in each password box, same as the sign in page.
+for (const btn of passwordForm.querySelectorAll('.toggle-password')) {
+  btn.addEventListener('click', () => {
+    const input = btn.closest('.control').querySelector('input');
+    const show = input.type === 'password';
+    input.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(show));
+    btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  });
+}
+function resetPasswordEyes() {
+  for (const btn of passwordForm.querySelectorAll('.toggle-password')) {
+    btn.closest('.control').querySelector('input').type = 'password';
+    btn.setAttribute('aria-pressed', 'false');
+    btn.setAttribute('aria-label', 'Show password');
+  }
+}
 passwordForm.addEventListener('submit', async (event) => {
   event.preventDefault();
   const next = $('p-new').value;
@@ -660,6 +677,7 @@ passwordForm.addEventListener('submit', async (event) => {
   try {
     await api('/api/auth/password', { method: 'PUT', body: { password: next, confirm_password: again } });
     passwordForm.reset();
+    resetPasswordEyes();
     toast('success', 'Password changed', 'Use the new password the next time you sign in.');
   } catch (err) { handleError(err, 'Could not change the password'); } finally { setBusy(btn, false); }
 });

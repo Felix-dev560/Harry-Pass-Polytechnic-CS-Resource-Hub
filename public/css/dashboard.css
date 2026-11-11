@@ -39,6 +39,19 @@
 /* Menu button: just the icon, no circle or border. */
 #menu-btn { width: auto; height: auto; padding: .35rem; }
 
+/* ---------- Password boxes with the eye toggle (same look as the sign in page) ---------- */
+.control-password input { padding-right: 3.1rem; }
+.toggle-password {
+  position: absolute; top: 50%; right: .3rem; transform: translateY(-50%);
+  display: grid; place-items: center; width: 2.75rem; height: 2.75rem; padding: 0;
+  border: 0; background: transparent; color: var(--muted); cursor: pointer; transition: color .15s ease;
+}
+.toggle-password:hover { color: var(--ink); }
+.toggle-password .icon-eye-off,
+.toggle-password[aria-pressed="true"] .icon-eye { display: none; }
+.toggle-password[aria-pressed="true"] .icon-eye-off { display: block; }
+@media (max-width: 39.99rem) { .control-password input { padding-right: 2.9rem; } }
+
 /* ---------- Posts library ---------- */
 .library { margin-top: 1rem; }
 .lib-level { margin-bottom: .75rem; overflow: hidden; border-radius: var(--r-lg); }
@@ -67,7 +80,8 @@
 .res-state { margin: .6rem 0 0; color: var(--muted); }
 
 /* ---------- Icon dropdowns (course options, document options) ---------- */
-.lib-course > summary .dd-trigger { margin-left: -.35rem; }
+/* The three dots now sit at the far right of the course row, where the arrow used to be. */
+.lib-course > summary .dd-trigger { margin-left: auto; flex: none; }
 .dd-menu {
   position: fixed; z-index: 50; display: flex; flex-direction: column; overflow: hidden;
   border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface);
