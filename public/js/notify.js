@@ -15,25 +15,7 @@ const COPY = {
   student: 'Get a notification when a new handout or past question is uploaded.',
   admin: 'Get a notification when students send new photos.',
 };
-
-
-// ===== TEMPORARY DEBUG (remove later): add ?debug=1 to any page address to see this device's notification state =====
-const DEBUG = new URLSearchParams(location.search).has('debug');
-const trace = [];
-function note(message) {
-  if (!DEBUG) return;
-  trace.push(`${new Date().toISOString().slice(11, 19)} ${message}`);
-  if (!document.body) return;
-  let box = document.getElementById('push-debug');
-  if (!box) {
-    box = document.createElement('pre');
-    box.id = 'push-debug';
-    Object.assign(box.style, { position: 'fixed', top: '0', left: '0', right: '0', zIndex: '9999', margin: '0', padding: '8px', background: '#fff', color: '#000', borderBottom: '3px solid red', font: '11px/1.35 monospace', whiteSpace: 'pre-wrap', maxHeight: '55vh', overflow: 'auto' });
-    document.body.append(box);
-  }
-  box.textContent = trace.join('\n');
-}
-// ===== END TEMPORARY DEBUG =====
+const UNSUPPORTED = 'Notifications do not work in this browser. Open this site in Chrome to turn them on.';
 
 const supported = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 
@@ -91,15 +73,15 @@ async function subscribe() {
 }
 
 // ---------- The bar ----------
-function showBar({ blocked }) {
+function showBar({ blocked, unsupported }) {
   if (store.get(DISMISS_KEY) || document.querySelector('.notify-bar')) return;
 
   const input = h('input', { type: 'checkbox', role: 'switch', 'aria-label': 'Turn on notifications from this site' });
   const bar = h('div', { class: 'notify-bar', role: 'region', 'aria-label': 'Notifications' },
     h('span', { class: 'notify-ico' }, icon('bell')),
     h('div', { class: 'notify-text' },
-      h('small', {}, blocked ? 'Allow notifications from this site in your browser settings.' : COPY[ROLE])),
-    !blocked && h('label', { class: 'switch' }, input, h('span', { class: 'switch-track', 'aria-hidden': 'true' })),
+      h('small', {}, unsupported ? UNSUPPORTED : blocked ? 'Allow notifications from this site in your browser settings.' : COPY[ROLE])),
+    !blocked && !unsupported && h('label', { class: 'switch' }, input, h('span', { class: 'switch-track', 'aria-hidden': 'true' })),
     h('button', { class: 'notify-close', type: 'button', 'aria-label': 'Hide for now', onclick: () => { store.set(DISMISS_KEY, '1'); bar.remove(); } }, icon('x')));
   document.body.append(bar);
 
@@ -130,21 +112,13 @@ function showBar({ blocked }) {
 // The bar is decided from the browser's permission alone, so it never waits for (or depends on) the service
 // worker or the network. The service worker is registered in the background.
 async function check() {
-  note(`notify.js is running on ${location.pathname} as ${ROLE}`);
-  note(`browser: ${navigator.userAgent.slice(0, 120)}`);
-  note(`supported=${supported} (serviceWorker=${'serviceWorker' in navigator}, PushManager=${'PushManager' in window}, Notification=${'Notification' in window})`);
-  if (!supported) { note('RESULT: this browser cannot do web push, so no bar is shown (in-app browser?)'); return; }
+  // Some browsers (Opera Mini, many in-app browsers) cannot receive web notifications at all.
+  // Say so, instead of showing nothing.
+  if (!supported) return showBar({ unsupported: true });
 
   const permission = Notification.permission;
-  note(`permission=${permission}, hidden-for-now=${store.get(DISMISS_KEY)}, saved-this-session=${store.get(SYNC_KEY)}`);
-  try {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    const sub = regs[0] ? await regs[0].pushManager.getSubscription() : null;
-    note(`service workers=${regs.length}, saved subscription on this device=${Boolean(sub)}`);
-  } catch (err) { note(`could not read service workers: ${err.message}`); }
-  if (permission === 'denied') { note('RESULT: permission is blocked, showing the blocked message'); return showBar({ blocked: true }); }
+  if (permission === 'denied') return showBar({ blocked: true });
   if (permission === 'default') {
-    note('RESULT: permission not asked yet, showing the toggle bar');
     showBar({ blocked: false });
     worker().catch(() => {}); // warm up so the toggle responds quickly
     return;
@@ -152,16 +126,12 @@ async function check() {
 
   // Already allowed: make sure this device is saved on the server for THIS role (student or admin).
   if (store.get(SYNC_KEY)) {
-    note('RESULT: permission already allowed and device already saved this session: no bar by design');
     worker().catch(() => {}); // registered on every visit so the browser can always deliver pushes
     return;
   }
   try {
-    note('permission already allowed: saving this device on the server now...');
     await withTimeout(subscribe(), 20000);
-    note('RESULT: device saved on the server silently, no bar by design');
   } catch (err) {
-    note(`SAVE FAILED: ${err.status ?? ''} ${err.message}`);
     if (err.status === 401) return; // admin session ended: the dashboard is already sending them to sign in
     showBar({ blocked: false }); // could not save this device: offer the toggle again instead of failing silently
   }
@@ -169,6 +139,6 @@ async function check() {
 
 // Runs once the page is idle, so it never competes with the first paint.
 const later = typeof requestIdleCallback === 'function' ? (fn) => requestIdleCallback(fn, { timeout: 2000 }) : (fn) => setTimeout(fn, 500);
-const start = () => later(() => { check().catch((err) => note(`ERROR: ${err?.message ?? err}`)); });
+const start = () => later(() => { check().catch(() => {}); });
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start, { once: true });
 else start();

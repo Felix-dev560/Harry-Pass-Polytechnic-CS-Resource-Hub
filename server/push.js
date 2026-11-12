@@ -18,8 +18,11 @@ if (enabled) {
 async function notifyRole(role, payload) {
   if (!enabled) return { sent: 0 };
   try {
-    const { data: subs, error } = await db.from('push_subscriptions')
-      .select('id, endpoint, p256dh, auth').eq('role', role).limit(5000);
+    // Photo alerts ('admin') go only to admin devices. New-material alerts ('student') go to every saved device,
+    // because a device that was switched to admin (by opening the dashboard) must not lose them.
+    let query = db.from('push_subscriptions').select('id, endpoint, p256dh, auth').limit(5000);
+    if (role !== 'student') query = query.eq('role', role);
+    const { data: subs, error } = await query;
     if (error) throw error;
     if (!subs?.length) return { sent: 0 };
 
