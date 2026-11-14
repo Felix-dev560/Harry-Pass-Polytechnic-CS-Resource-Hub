@@ -291,12 +291,11 @@ footer.site-foot .wrap { display: block; }
 /* ---------- Download counter in the top bar ---------- */
 .dl-pill {
   margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: .4rem;
-  min-height: 2.25rem; padding: 0 .8rem; border: 1px solid var(--line); border-radius: 999px;
+  min-height: 2.25rem; padding: 0 .4rem; border: 0; border-radius: 999px;
   background: transparent; color: var(--ink); font: 700 .95rem/1 var(--font-body);
   font-variant-numeric: tabular-nums; white-space: nowrap; cursor: default;
 }
 .dl-pill[hidden] { display: none; }
-.dl-pill:hover { background: var(--hover); }
 .dl-pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .dl-pill .icon { width: 1.05rem; height: 1.05rem; }
 .dl-short { display: none; }
@@ -309,7 +308,7 @@ footer.site-foot .wrap { display: block; }
   .brand-text strong { font-size: 1rem; }
   .brand-text small { font-size: .78rem; margin-top: .1rem; }
   /* Download counter: small on a phone. A long number (100,000 and up) is shortened, and a tap shows it in full. */
-  .dl-pill { min-height: 2.2rem; padding: 0 .6rem; gap: .3rem; font-size: .85rem; cursor: pointer; }
+  .dl-pill { min-height: 2.2rem; padding: 0 .3rem; gap: .3rem; font-size: .85rem; cursor: pointer; }
   .dl-pill .icon { width: .95rem; height: .95rem; }
   .dl-pill.is-big:not(.is-open) .dl-full { display: none; }
   .dl-pill.is-big:not(.is-open) .dl-short { display: inline; }

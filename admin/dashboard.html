@@ -13,6 +13,9 @@
 <body class="student dash">
 
 <div class="float-menu">
+  <div class="stat-card" id="dl-stat" role="status" title="Total student downloads" aria-label="Total student downloads">
+    <i data-icon="download"></i><strong id="dl-total">–</strong>
+  </div>
   <div class="menu-wrap">
     <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><i data-icon="more-vertical"></i></button>
     <div class="menu" id="menu" role="menu" hidden>
@@ -30,10 +33,6 @@
 
   <!-- Course and upload, one form -->
   <section id="courses" aria-labelledby="courses-title">
-    <div class="stat-card" id="dl-stat" role="status">
-      <i data-icon="download"></i>
-      <div><small>Total student downloads</small><strong id="dl-total">–</strong></div>
-    </div>
     <h2 id="courses-title">Courses</h2>
     <form class="form-card glass" id="course-form" novalidate>
       <div class="edit-banner" id="edit-banner" role="status" hidden>

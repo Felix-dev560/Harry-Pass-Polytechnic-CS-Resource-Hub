@@ -39,7 +39,9 @@ $('logout').addEventListener('click', async () => {
 async function loadDownloadTotal() {
   try {
     const { total } = await api('/api/stats/downloads');
-    $('dl-total').textContent = new Intl.NumberFormat('en-US').format(Number(total) || 0);
+    const text = new Intl.NumberFormat('en-US').format(Number(total) || 0);
+    $('dl-total').textContent = text;
+    $('dl-stat').setAttribute('aria-label', `${text} student downloads`);
   } catch { /* keep the dash if the number cannot be loaded */ }
 }
 
@@ -51,6 +53,7 @@ function showView(name) {
   for (const item of document.querySelectorAll('[data-view]')) item.setAttribute('aria-current', String(item.dataset.view === name));
   history.replaceState(null, '', `#${name}`);
   window.scrollTo({ top: 0 });
+  $('dl-stat').hidden = name !== 'courses'; // the counter belongs to the landing view only
   if (name === 'courses') loadDownloadTotal();
   if (name === 'posts') refreshOpenCourses();
   if (name === 'submissions') loadSubmissions();
