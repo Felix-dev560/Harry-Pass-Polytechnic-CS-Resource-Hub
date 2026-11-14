@@ -212,6 +212,34 @@ router.get('/:id/file', requireAdmin, asyncHandler(async (req, res) => {
   res.send(Buffer.from(await upstream.arrayBuffer()));
 }));
 
+// Deletes many photos in one go (the dashboard's Delete and Delete all use this). One lookup, ONE call to Cloudinary
+// for the whole set and one database delete, instead of three slow steps per photo. Only photos that Cloudinary
+// confirmed gone are removed from the database, so a failure never leaves the admin with a missing record.
+router.delete('/', requireAdmin, asyncHandler(async (req, res) => {
+  const ids = [...new Set(Array.isArray(req.body?.ids) ? req.body.ids.map(Number) : [])];
+  if (ids.length < 1 || ids.length > 100 || ids.some((id) => !Number.isInteger(id) || id < 1)) {
+    throw new HttpError(400, 'Choose between 1 and 100 photos to delete.');
+  }
+
+  const { data: rows, error: readError } = await db.from('student_submissions').select('id, public_id').in('id', ids);
+  if (readError) throw readError;
+  if (!rows?.length) return res.json({ deleted: [], failed: 0 }); // already gone
+
+  let result;
+  try {
+    result = await cloudinary.api.delete_resources(rows.map((r) => r.public_id), { resource_type: 'image', type: 'upload', invalidate: true });
+  } catch (err) {
+    console.error('Cloudinary bulk delete failed:', err);
+    throw new HttpError(502, 'The photos could not be deleted from storage. Try again.');
+  }
+  const gone = rows.filter((r) => ['deleted', 'not_found'].includes(result?.deleted?.[r.public_id]));
+  if (gone.length > 0) {
+    const { error } = await db.from('student_submissions').delete().in('id', gone.map((r) => r.id));
+    if (error) throw error;
+  }
+  res.json({ deleted: gone.map((r) => r.id), failed: rows.length - gone.length });
+}));
+
 router.delete('/:id', requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'Invalid id.');

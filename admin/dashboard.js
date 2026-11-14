@@ -602,7 +602,9 @@ function groupCard(g) {
     h('ul', { class: 'thumb-grid' }, g.items.map((s, i) => thumbItem(g, s, i))));
 }
 
+let queueList = []; // the photos on screen, so a delete can be shown at once without asking the server again
 function renderQueue(list) {
+  queueList = list;
   const badge = $('queue-count');
   badge.textContent = list.length;
   badge.hidden = list.length === 0;
@@ -687,17 +689,35 @@ async function downloadAll(g, btn) {
   }
 }
 
+/** Takes the photos off the screen at once, then deletes them on the server in the background.
+ *  The server removes them with one request, so it is fast. If it fails, the photos come back and an error shows. */
+async function removePhotos(photos, label) {
+  const ids = photos.map((s) => s.id);
+  const gone = new Set(ids);
+  renderQueue(queueList.filter((s) => !gone.has(s.id)));
+  toast('success', photos.length === 1 ? 'Photo deleted' : 'Photos deleted', label);
+  try {
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 100) chunks.push(ids.slice(i, i + 100));
+    const results = await Promise.all(chunks.map((chunk) => api('/api/submissions', { method: 'DELETE', body: { ids: chunk } })));
+    const failed = results.reduce((n, r) => n + (r?.failed || 0), 0);
+    if (failed > 0) {
+      toast('error', 'Some photos were not deleted', `${failed} could not be removed from storage. They are back on the list, try again.`, 7000);
+      await loadSubmissions();
+    }
+  } catch (err) {
+    handleError(err, 'The photos could not be deleted');
+    await loadSubmissions(); // put back whatever was not really deleted
+  }
+}
+
 async function deleteOne(g, s) {
   const ok = await confirmDialog({
     title: 'Delete this photo?', text: 'It is removed from storage permanently. Download it first if you still need it.',
     confirm: 'Delete photo', danger: true,
   });
   if (!ok) return;
-  try {
-    await api(`/api/submissions/${s.id}`, { method: 'DELETE' });
-    toast('success', 'Photo deleted', `${g.code} ${g.year}`);
-  } catch (err) { handleError(err); }
-  await loadSubmissions();
+  await removePhotos([s], `${g.code} ${g.year}`);
 }
 
 async function deleteGroup(g) {
@@ -706,17 +726,7 @@ async function deleteGroup(g) {
     confirm: 'Delete all', danger: true,
   });
   if (!ok) return;
-  let done = 0;
-  try {
-    for (const s of g.items) {
-      await api(`/api/submissions/${s.id}`, { method: 'DELETE' });
-      done++;
-    }
-    toast('success', 'Photos deleted', `${done} photos for ${g.code} ${g.year}.`);
-  } catch (err) {
-    handleError(err, `Deleted ${done} of ${g.items.length}, then stopped`);
-  }
-  await loadSubmissions();
+  await removePhotos(g.items, `${g.items.length} photos for ${g.code} ${g.year}.`);
 }
 
 // ---------- Password ----------
