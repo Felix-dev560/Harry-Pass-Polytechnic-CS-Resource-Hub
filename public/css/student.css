@@ -416,7 +416,7 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
 @media (max-width: 39.99rem) {
   .count-dot { top: .45rem; right: .45rem; min-width: 1.35rem; height: 1.35rem; font-size: .7rem; }
   /* a clear gap between "Browse by level" and the Contribute card */
-  .cta-card { margin-top: 2.5rem; }
+  .cta-card { margin-top: 5rem; }
   /* smaller link icons and text in the footer */
   .about-links .pill-btn.sm { min-height: 2rem; padding: 0 .5rem; gap: .3rem; font-size: .82rem; }
   .about-links .icon { width: .95rem; height: .95rem; }
