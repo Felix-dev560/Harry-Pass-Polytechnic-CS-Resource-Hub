@@ -157,3 +157,7 @@ dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
 .stat-card[hidden] { display: none; }
 .stat-card .icon { width: 1.05rem; height: 1.05rem; }
 .stat-card strong { font: inherit; }
+
+/* Progress bar while a ZIP is being made: fixed just below the top corner, so it is seen wherever the page is scrolled to.
+   It stops short of the download counter and the three-dot menu on the right. */
+.dash .send-bar { position: fixed; left: 0; right: 0; top: calc(max(1rem, env(safe-area-inset-top)) + 3.4rem); z-index: 30; }

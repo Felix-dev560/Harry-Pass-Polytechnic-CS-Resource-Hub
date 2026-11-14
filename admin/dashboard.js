@@ -638,15 +638,19 @@ function bundleDetails(g) {
 }
 
 /** Reads one photo. Tries Cloudinary directly (fastest); if the browser refuses, reads it through our own server. */
-async function fetchPhoto(s, i) {
+async function fetchPhoto(s, i, signal) {
   try {
-    const direct = await fetch(s.image_url, { credentials: 'omit' });
+    const direct = await fetch(s.image_url, { credentials: 'omit', signal });
     if (direct.ok) return direct;
-  } catch { /* blocked or offline: use our server below */ }
+  } catch (err) {
+    if (signal?.aborted) throw err; // cancelled: do not try again
+    /* blocked or offline: use our server below */
+  }
   let viaServer;
   try {
-    viaServer = await fetch(`/api/submissions/${s.id}/file`, { credentials: 'same-origin' });
-  } catch {
+    viaServer = await fetch(`/api/submissions/${s.id}/file`, { credentials: 'same-origin', signal });
+  } catch (err) {
+    if (signal?.aborted) throw err;
     throw new Error(`Photo ${i + 1} could not be reached.`);
   }
   if (viaServer.status === 401) { location.replace('index.html#login'); throw new Error('Please sign in again.'); }
@@ -654,28 +658,73 @@ async function fetchPhoto(s, i) {
   return viaServer;
 }
 
-/** Packs every photo of a bundle, plus its details, into one ZIP that downloads with a single tap. */
+/** Reads a response piece by piece, so the bar can follow it. onProgress(bytesSoFar, totalBytesOrZero). */
+async function readWithProgress(res, onProgress) {
+  const total = Number(res.headers.get('content-length')) || 0;
+  if (!res.body) {
+    const whole = new Uint8Array(await res.arrayBuffer());
+    onProgress(whole.length, whole.length);
+    return whole;
+  }
+  const reader = res.body.getReader();
+  const chunks = [];
+  let got = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    got += value.length;
+    onProgress(got, total);
+  }
+  const whole = new Uint8Array(got);
+  let at = 0;
+  for (const chunk of chunks) { whole.set(chunk, at); at += chunk.length; }
+  return whole;
+}
+
+// The bar under the top of the dashboard while a ZIP is being made.
+const zipBar = { root: $('zip-bar'), track: $('zip-track'), fill: $('zip-fill'), pct: $('zip-pct'), cancel: $('zip-cancel') };
+function setZipProgress(value) {
+  const v = Math.max(0, Math.min(100, Math.round(value)));
+  zipBar.fill.style.width = `${v}%`;
+  zipBar.pct.textContent = `${v}%`;
+  zipBar.track.setAttribute('aria-valuenow', String(v));
+}
+
+/** Packs every photo of a bundle, plus its details, into one ZIP that downloads with a single tap.
+ *  A bar shows the percent done, and Cancel stops it (nothing is downloaded). */
 async function downloadAll(g, btn) {
-  if (btn?.disabled) return;
+  if (btn?.disabled || !zipBar.root.hidden) return; // one ZIP at a time
   if (btn) setBusy(btn, true);
-  toast('info', 'Preparing ZIP', `Packing ${g.items.length} ${g.items.length === 1 ? 'photo' : 'photos'} for ${g.code} ${g.year}.`, 5000);
+  const controller = new AbortController();
+  zipBar.cancel.disabled = false;
+  zipBar.cancel.onclick = () => { zipBar.cancel.disabled = true; controller.abort(); };
+  setZipProgress(0);
+  zipBar.root.hidden = false;
   try {
     const files = [{ name: 'details.txt', data: new TextEncoder().encode(bundleDetails(g)) }];
     const photos = new Array(g.items.length);
+    const done = new Array(g.items.length).fill(0); // 0 to 1 for each photo
+    const refresh = () => setZipProgress((95 * done.reduce((n, x) => n + x, 0)) / g.items.length); // the last 5% is packing
     let next = 0;
     const worker = async () => { // fetch 4 photos at a time
-      while (next < g.items.length) {
+      while (next < g.items.length && !controller.signal.aborted) {
         const i = next++;
-        const res = await fetchPhoto(g.items[i], i);
+        const res = await fetchPhoto(g.items[i], i, controller.signal);
+        const data = await readWithProgress(res, (got, total) => { done[i] = total ? Math.min(0.99, got / total) : 0; refresh(); });
+        done[i] = 1;
+        refresh();
         const ext = /\.(jpe?g|png|webp)$/i.exec(new URL(g.items[i].image_url).pathname)?.[1]?.toLowerCase() || 'jpg';
-        photos[i] = { name: `${fileName(g, i)}.${ext}`, data: new Uint8Array(await res.arrayBuffer()) };
+        photos[i] = { name: `${fileName(g, i)}.${ext}`, data };
       }
     };
     await Promise.all([worker(), worker(), worker(), worker()]);
+    if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
     files.push(...photos);
 
     const zipName = `${bundleTitle(g).replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)}.zip`;
     const url = URL.createObjectURL(makeZip(files));
+    setZipProgress(100);
     const a = h('a', { href: url, download: zipName });
     document.body.append(a);
     a.click();
@@ -683,8 +732,10 @@ async function downloadAll(g, btn) {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     toast('success', 'ZIP ready', `${zipName} is in your downloads folder.`, 6000);
   } catch (err) {
-    toast('error', 'Could not make the ZIP', `${err.message} Try again in a moment.`, 7000);
+    if (controller.signal.aborted || err.name === 'AbortError') toast('info', 'ZIP cancelled', 'Nothing was downloaded.', 4000);
+    else toast('error', 'Could not make the ZIP', `${err.message} Try again in a moment.`, 7000);
   } finally {
+    zipBar.root.hidden = true;
     if (btn) setBusy(btn, false);
   }
 }
