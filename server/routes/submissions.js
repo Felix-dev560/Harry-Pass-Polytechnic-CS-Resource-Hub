@@ -78,6 +78,78 @@ router.post('/', submitLimiter, upload.single('image'), asyncHandler(async (req,
   res.status(201).json({ ok: true });
 }));
 
+// ---- Fast path: the phone sends the photo straight to Cloudinary, then tells us about it ----
+// 1) /sign gives a one-photo permission (signed by our secret, limited to our folder and to image formats).
+// 2) The phone uploads the file to Cloudinary itself, without going through this server.
+// 3) /record checks that Cloudinary really stored that photo, then saves it in the database for the admin.
+const PHOTO_FOLDER = 'harrypass/submissions';
+const PHOTO_FORMATS = ['jpg', 'png', 'webp'];
+
+const signLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 150, // one per photo
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { error: 'Too many uploads from this connection. Try again in an hour.' },
+});
+
+router.post('/sign', signLimiter, (req, res) => {
+  if (req.body?.website) throw new HttpError(400, 'Could not send the photo.'); // the hidden field only bots fill
+  const params = { allowed_formats: PHOTO_FORMATS.join(','), folder: PHOTO_FOLDER, timestamp: Math.round(Date.now() / 1000) };
+  const signature = cloudinary.utils.api_sign_request(params, config.cloudinary.api_secret);
+  res.set('Cache-Control', 'no-store');
+  res.json({ ...params, signature, api_key: config.cloudinary.api_key, cloud_name: config.cloudinary.cloud_name });
+});
+
+/** Cloudinary signs its upload answer (public_id + version). If the signature matches, the answer is genuine. */
+function answerIsGenuine({ public_id, version, signature }) {
+  try {
+    const expected = cloudinary.utils.api_sign_request({ public_id, version: String(version) }, config.cloudinary.api_secret);
+    return typeof signature === 'string' && signature === expected;
+  } catch { return false; }
+}
+
+router.post('/record', signLimiter, asyncHandler(async (req, res) => {
+  if (req.body?.website) return res.status(201).json({ ok: true });
+
+  const codeMatch = /^([A-Za-z]{2,5})[\s-]?(\d{3})$/.exec(String(req.body?.course_code ?? '').trim());
+  if (!codeMatch) throw new HttpError(400, 'Course code looks like COM 111.');
+  const course_code = `${codeMatch[1].toUpperCase()} ${codeMatch[2]}`;
+  const semester = String(req.body?.semester ?? '').trim();
+  if (!SEMESTERS.includes(semester)) throw new HttpError(400, 'Choose First or Second semester.');
+  const course_title = String(req.body?.course_title ?? '').trim().slice(0, 150) || null;
+  const year = Number(req.body?.year);
+  if (!Number.isInteger(year) || year < FIRST_YEAR || year > new Date().getFullYear() + 1) {
+    throw new HttpError(400, `Enter a year from ${FIRST_YEAR} to ${new Date().getFullYear()}.`);
+  }
+
+  const public_id = String(req.body?.public_id ?? '');
+  const version = String(req.body?.version ?? '');
+  const format = String(req.body?.format ?? '').toLowerCase();
+  if (!/^harrypass\/submissions\/[A-Za-z0-9_-]{6,80}$/.test(public_id) || !/^\d{1,12}$/.test(version) || !PHOTO_FORMATS.includes(format)) {
+    throw new HttpError(400, 'That photo could not be recognised.');
+  }
+
+  // Proof that the photo is really on our Cloudinary: the signed answer, or else ask Cloudinary directly.
+  let genuine = answerIsGenuine({ public_id, version, signature: req.body?.signature });
+  if (!genuine) {
+    try {
+      const found = await cloudinary.api.resource(public_id, { resource_type: 'image' });
+      genuine = Boolean(found?.public_id === public_id && PHOTO_FORMATS.includes(String(found.format).toLowerCase()));
+    } catch { genuine = false; }
+  }
+  if (!genuine) throw new HttpError(400, 'That photo could not be verified.');
+
+  const { data: existing, error: readError } = await db.from('student_submissions').select('id').eq('public_id', public_id).maybeSingle();
+  if (readError) throw readError;
+  if (existing) return res.status(201).json({ ok: true }); // already saved: sending the same photo twice stores it once
+
+  const image_url = `https://res.cloudinary.com/${config.cloudinary.cloud_name}/image/upload/v${version}/${public_id}.${format}`;
+  const { error } = await db.from('student_submissions').insert({ course_code, course_title, semester, year, image_url, public_id });
+  if (error) throw error;
+  res.status(201).json({ ok: true });
+}));
+
 // The Contribute page calls this once, after the last photo of a batch is stored (not once per photo).
 // Photos are marked notified in one atomic update, so repeated or forged calls find nothing new and send nothing.
 const notifyLimiter = rateLimit({

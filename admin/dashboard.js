@@ -1,5 +1,6 @@
 import { api, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from '../js/api.js';
 import { icon, toast, confirmDialog, tokens, matches, bindSearch, viewUrl, downloadUrl as docDownloadUrl } from '../js/ui.js';
+import { makeZip } from './zip.js';
 
 const $ = (id) => document.getElementById(id);
 const VIEWS = ['courses', 'posts', 'submissions', 'password'];
@@ -594,7 +595,7 @@ function groupCard(g) {
     g.title && h('span', { class: 'muted' }, g.title),
     h('span', { class: 'count-chip' }, count));
   const actions = h('div', { class: 'sub-actions' },
-    h('button', { class: 'pill-btn sm primary', type: 'button', onclick: () => downloadAll(g) }, icon('download'), 'Download all'),
+    h('button', { class: 'pill-btn sm primary', type: 'button', onclick: (e) => downloadAll(g, e.currentTarget) }, icon('download'), 'Download all'),
     h('button', { class: 'pill-btn sm danger', type: 'button', onclick: () => deleteGroup(g) }, icon('trash'), 'Delete all'));
   return h('section', { class: 'sub-group glass' },
     h('div', { class: 'sub-head' }, meta, actions),
@@ -616,16 +617,58 @@ async function loadSubmissions() {
   } catch (err) { handleError(err, 'Could not load student photos'); }
 }
 
-async function downloadAll(g) {
-  toast('info', 'Downloading photos', `${g.items.length} files. If your browser asks, allow multiple downloads.`, 6000);
-  for (const [i, s] of g.items.entries()) {
-    const a = h('a', { href: downloadUrl(s.image_url, fileName(g, i)), download: '', rel: 'noopener' });
+/** The details written on the top of a bundle, as one line: GNS 411 - 2026 - First semester - psychology */
+function bundleTitle(g) {
+  return [g.code, g.year, g.semester ? `${g.semester} semester` : '', g.title].filter(Boolean).join(' - ');
+}
+
+/** The same details as a small text file, placed inside the ZIP. */
+function bundleDetails(g) {
+  const dates = g.items.map((s) => new Date(s.submitted_at).toLocaleDateString());
+  return [
+    `Course code: ${g.code}`,
+    `Course title: ${g.title || 'Not given'}`,
+    `Semester: ${semesterLabel(g)}`,
+    `Year: ${g.year}`,
+    `Photos: ${g.items.length}`,
+    `Sent: ${dates[0] === dates.at(-1) ? dates[0] : `${dates[0]} to ${dates.at(-1)}`}`,
+  ].join('\r\n') + '\r\n';
+}
+
+/** Packs every photo of a bundle, plus its details, into one ZIP that downloads with a single tap. */
+async function downloadAll(g, btn) {
+  if (btn?.disabled) return;
+  if (btn) setBusy(btn, true);
+  toast('info', 'Preparing ZIP', `Packing ${g.items.length} ${g.items.length === 1 ? 'photo' : 'photos'} for ${g.code} ${g.year}.`, 5000);
+  try {
+    const files = [{ name: 'details.txt', data: new TextEncoder().encode(bundleDetails(g)) }];
+    const photos = new Array(g.items.length);
+    let next = 0;
+    const worker = async () => { // fetch 4 photos at a time
+      while (next < g.items.length) {
+        const i = next++;
+        const res = await fetch(g.items[i].image_url, { credentials: 'omit' });
+        if (!res.ok) throw new Error(`Photo ${i + 1} could not be fetched.`);
+        const ext = /\.(jpe?g|png|webp)$/i.exec(new URL(g.items[i].image_url).pathname)?.[1]?.toLowerCase() || 'jpg';
+        photos[i] = { name: `${fileName(g, i)}.${ext}`, data: new Uint8Array(await res.arrayBuffer()) };
+      }
+    };
+    await Promise.all([worker(), worker(), worker(), worker()]);
+    files.push(...photos);
+
+    const zipName = `${bundleTitle(g).replace(/[\\/:*?"<>|]+/g, '').replace(/\s+/g, ' ').trim().slice(0, 120)}.zip`;
+    const url = URL.createObjectURL(makeZip(files));
+    const a = h('a', { href: url, download: zipName });
     document.body.append(a);
     a.click();
     a.remove();
-    await wait(600);
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast('success', 'ZIP ready', `${zipName} is in your downloads folder.`, 6000);
+  } catch (err) {
+    toast('error', 'Could not make the ZIP', `${err.message} Check your connection and try again.`, 7000);
+  } finally {
+    if (btn) setBusy(btn, false);
   }
-  toast('success', 'Downloads started', `${g.items.length} photos for ${g.code} ${g.year}.`);
 }
 
 async function deleteOne(g, s) {

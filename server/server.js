@@ -23,7 +23,7 @@ app.use(helmet({
       styleSrc: ["'self'", 'https://fonts.googleapis.com'],
       fontSrc: ['https://fonts.gstatic.com'],
       imgSrc: ["'self'", 'data:', 'blob:', 'https://res.cloudinary.com'],
-      connectSrc: ["'self'", 'https://api.cloudinary.com'],
+      connectSrc: ["'self'", 'https://api.cloudinary.com', 'https://res.cloudinary.com'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
       upgradeInsecureRequests: config.isProd ? [] : null,

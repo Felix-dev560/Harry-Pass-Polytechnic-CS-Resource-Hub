@@ -302,6 +302,15 @@ footer.site-foot .wrap { display: block; }
 .dl-label { display: none; color: var(--muted); font-weight: 500; font-size: .85rem; }
 @media (min-width: 40rem) { .dl-label { display: inline; } }
 
+/* ---------- Sending bar (Contribute page): sits just under the top bar and stays in view while sending ---------- */
+.send-bar { position: sticky; top: var(--topbar-h, 3.75rem); z-index: 15; background: var(--bg); border-bottom: 1px solid var(--line); }
+.send-bar[hidden] { display: none; }
+.send-bar .wrap { display: flex; align-items: center; gap: .75rem; padding-block: .6rem; }
+.send-track { flex: 1; min-width: 0; height: .8rem; border-radius: 999px; background: var(--line); overflow: hidden; }
+.send-fill { width: 0; height: 100%; border-radius: inherit; background: var(--send-fill, #f2733f); transition: width .25s linear; } /* change --send-fill to change the colour */
+.send-pct { flex: none; min-width: 3.2ch; text-align: right; font: 700 1rem/1 var(--font-body); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .send-fill { transition: none; } }
+
 /* ---------- Phones: tighter, app-sized layout (the root font is already 14px, see style.css) ---------- */
 @media (max-width: 39.99rem) {
   .topbar .wrap { min-height: 3.1rem; padding-block: .35rem; }
