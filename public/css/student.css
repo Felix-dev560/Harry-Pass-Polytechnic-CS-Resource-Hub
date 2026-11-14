@@ -141,7 +141,6 @@ mark { padding: 0 .1em; border-radius: 3px; background: var(--mark); color: inhe
 }
 
 .cta-card { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; padding: 1.1rem 1.25rem; border-radius: var(--r-lg); background: var(--chip); }
-.cta-card .tile-ico { flex: none; }
 .cta-card .cta-text { flex: 1 1 16rem; }
 .cta-card .cta-text strong { display: block; font: 700 1.1rem/1.2 var(--font-head); }
 .cta-card .cta-text span { color: var(--muted); }
