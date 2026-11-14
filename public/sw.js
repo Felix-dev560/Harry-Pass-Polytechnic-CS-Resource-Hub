@@ -2,6 +2,9 @@
 // It lives at the site root so it covers both the student pages and /admin/.
 'use strict';
 
+// The school crest shown on every notification (replaces the grey letter Chrome draws when there is no picture).
+const ICON = '/assets/notify-icon.png';
+
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
@@ -15,6 +18,7 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Harry Pass CS Hub';
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || '',
+    icon: data.icon || ICON,
     tag: data.tag || undefined, // same tag replaces the older notification instead of stacking
     data: { url: data.url || '/' },
   }));

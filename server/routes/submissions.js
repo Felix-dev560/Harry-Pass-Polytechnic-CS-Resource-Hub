@@ -106,7 +106,7 @@ router.post('/notify', notifyLimiter, asyncHandler(async (req, res) => {
   const count = data?.length ?? 0;
   if (count > 0) {
     await notifyRole('admin', {
-      title: count === 1 ? 'New photo from a student' : `${count} new photos from a student`,
+      title: count === 1 ? 'New document from a student' : `${count} new documents from a student`,
       body: `${course_code}, ${semester} semester, ${year}. Tap to review.`,
       url: '/admin/dashboard.html#submissions',
       tag: `photos-${course_code.replace(' ', '')}-${semester}-${year}`,

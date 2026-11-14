@@ -49,11 +49,13 @@ async function announceMaterial(course_id, year, kinds) {
   const { data: course } = await db.from('courses')
     .select('id, level_id, semester, course_code, course_title').eq('id', course_id).maybeSingle();
   if (!course) return;
-  const what = kinds.length === 2 ? 'Handout and past question' : `${kinds[0][0].toUpperCase()}${kinds[0].slice(1)}`;
+  const both = kinds.length === 2;
+  const what = both ? 'past question and handout' : kinds[0]; // 'handout' or 'past question'
+  const kind = both ? 'both' : (kinds[0] === 'handout' ? 'handout' : 'question'); // tells the page which box to point at
   await notifyRole('student', {
-    title: `New ${what.toLowerCase()} posted`,
+    title: `New ${what} just posted`,
     body: `${course.course_code}: ${course.course_title}\n${LEVEL_NAMES[course.level_id]}, ${course.semester} semester, ${year}`,
-    url: `/courses.html?level=${course.level_id}&semester=${course.semester}&focus=${course.id}&year=${year}`,
+    url: `/courses.html?level=${course.level_id}&semester=${course.semester}&focus=${course.id}&year=${year}&kind=${kind}`,
     tag: `material-${course.id}-${year}`,
   });
 }

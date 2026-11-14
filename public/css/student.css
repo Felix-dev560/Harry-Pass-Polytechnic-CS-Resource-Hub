@@ -364,6 +364,7 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
 
 /* The year a notification pointed to */
 .year-item.is-target { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: var(--radius); }
+.res.is-target-res { outline: 2px solid var(--ink); outline-offset: 2px; border-radius: var(--radius); }
 @media (prefers-reduced-motion: reduce) { .notify-bar, .switch-track, .switch-track::after { animation-duration: .01ms; transition-duration: .01ms; } }
 
 /* ---------- Round file-count badge on each level tile ---------- */
@@ -408,4 +409,4 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
 
 /* ---------- Developer line: sits just above the link icons ---------- */
 .dev-line { display: flex; justify-content: center; align-items: baseline; gap: .4rem; margin: 0 0 .4rem; color: var(--muted); font-size: .92rem; text-align: center; }
-.dev-line .dev-name { font-size: 1.5rem; }
+.dev-line .dev-name { font-size: 1.5rem; }    

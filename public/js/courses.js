@@ -7,6 +7,7 @@ const level = params.get('level');
 let semester = SEMESTERS.includes(params.get('semester')) ? params.get('semester') : 'First'; // the toggle on the page switches it
 const focusId = params.get('focus');
 const focusYear = Number(params.get('year')) || null; // set by a notification link, to land on one year of the course
+const focusKind = params.get('kind'); // 'question', 'handout' or 'both': which box the notification was about
 const $ = (id) => document.getElementById(id);
 const listEl = $('course-list');
 const emptyEl = $('empty-semester'); // kept in variables: they leave the page while a list is shown
@@ -31,11 +32,11 @@ function resource(kind, course, year, value, note) {
   const head = h('div', { class: 'res-title' }, icon(kind === 'question' ? 'file-text' : 'book-open'), label);
 
   if (!value) {
-    return h('div', { class: 'res' }, head, h('p', { class: 'res-empty' }, icon('info'), note || 'Not available yet.'));
+    return h('div', { class: 'res', 'data-kind': kind }, head, h('p', { class: 'res-empty' }, icon('info'), note || 'Not available yet.'));
   }
   if (isHttpUrl(value)) {
     const dl = downloadUrl(value);
-    return h('div', { class: 'res' }, head, h('div', { class: 'res-actions' },
+    return h('div', { class: 'res', 'data-kind': kind }, head, h('div', { class: 'res-actions' },
       h('a', { class: 'pill-btn sm primary', href: viewUrl(value), target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'Open'),
       dl && h('a', {
         class: 'pill-btn sm', href: dl, download: '', rel: 'noopener noreferrer',
@@ -43,7 +44,7 @@ function resource(kind, course, year, value, note) {
       }, icon('download'), 'Download')));
   }
   // Older posts that were saved as plain text (before files were used) still open in place.
-  return h('div', { class: 'res' }, head, h('details', { class: 'notes-box' },
+  return h('div', { class: 'res', 'data-kind': kind }, head, h('details', { class: 'notes-box' },
     h('summary', {}, icon('file-text'), 'Read notes'),
     h('pre', {}, value),
     h('button', { class: 'pill-btn sm', type: 'button', onclick: () => copyText(value) }, icon('copy'), 'Copy text')));
@@ -97,7 +98,13 @@ function courseItem(course) {
       // Arrived from a notification: scroll to the year that was posted and mark it.
       if (focusYear && String(course.id) === String(Number(focusId))) {
         const card = document.getElementById(`year-${course.id}-${focusYear}`);
-        if (card) { card.querySelector('details')?.setAttribute('open', ''); card.classList.add('is-target'); card.scrollIntoView({ block: 'center' }); }
+        if (card) {
+          card.querySelector('details')?.setAttribute('open', '');
+          // One kind posted: point at that box. Both posted (or an older link with no kind): point at the whole year.
+          const box = focusKind === 'question' || focusKind === 'handout' ? card.querySelector(`.res[data-kind="${focusKind}"]`) : null;
+          (box || card).classList.add(box ? 'is-target-res' : 'is-target');
+          (box || card).scrollIntoView({ block: 'center' });
+        }
       }
     } catch (err) {
       loaded = false; // allow retry on next open
