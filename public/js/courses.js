@@ -1,5 +1,6 @@
 import { api, apiCached, h, isHttpUrl, currentYear, FIRST_YEAR, LEVELS } from './api.js';
 import { icon, toast, tokens, matches, highlight, bindSearch, downloadUrl, viewUrl } from './ui.js';
+import { countDownload } from './download-count.js';
 
 const params = new URLSearchParams(location.search);
 const SEMESTERS = ['First', 'Second'];
@@ -40,7 +41,10 @@ function resource(kind, course, year, value, note) {
       h('a', { class: 'pill-btn sm primary', href: viewUrl(value), target: '_blank', rel: 'noopener noreferrer' }, icon('external-link'), 'Open'),
       dl && h('a', {
         class: 'pill-btn sm', href: dl, download: '', rel: 'noopener noreferrer',
-        onclick: () => toast('success', 'Download started', `${course.course_code} ${year} ${label.toLowerCase()} will be in your downloads folder.`),
+        onclick: () => {
+          countDownload(dl);
+          toast('success', 'Download started', `${course.course_code} ${year} ${label.toLowerCase()} will be in your downloads folder.`);
+        },
       }, icon('download'), 'Download')));
   }
   // Older posts that were saved as plain text (before files were used) still open in place.

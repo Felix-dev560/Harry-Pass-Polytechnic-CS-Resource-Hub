@@ -149,3 +149,10 @@ dialog.confirm::backdrop { background: rgb(0 0 0 / .55); }
   .post { padding: .8rem 0; gap: .6rem; }
   .post-foot { justify-content: flex-start; }
 }
+
+/* Total downloads card at the top of the landing view. It grows with the number, and a very long number wraps instead of overflowing. */
+.stat-card { display: flex; align-items: center; gap: .9rem; width: fit-content; max-width: 100%; margin: 0 0 1.5rem; padding: .9rem 1.25rem; border: 1px solid var(--line); border-radius: var(--r-md); }
+.stat-card .icon { width: 1.6rem; height: 1.6rem; }
+.stat-card > div { min-width: 0; }
+.stat-card small { display: block; color: var(--muted); font-size: .9rem; }
+.stat-card strong { display: block; font: 800 clamp(1.9rem, 9vw, 2.8rem)/1.1 var(--font-head); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

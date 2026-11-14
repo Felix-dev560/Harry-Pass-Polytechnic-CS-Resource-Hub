@@ -81,3 +81,23 @@ alter table push_subscriptions enable row level security;
 alter table student_submissions add column if not exists notified boolean not null default false;
 -- Photos that were already waiting before this feature existed should not trigger a notification later.
 update student_submissions set notified = true where notified = false and submitted_at < now() - interval '1 minute';
+
+-- ---- Download counter (safe to re-run) ----
+-- One row holding the total number of student downloads. The function adds 1 in a single atomic step,
+-- so two students downloading at the same moment are both counted.
+create table if not exists download_counter (
+  id     smallint primary key check (id = 1),
+  total  bigint not null default 0 check (total >= 0)
+);
+insert into download_counter (id, total) values (1, 0) on conflict (id) do nothing;
+alter table download_counter enable row level security;
+
+create or replace function increment_downloads() returns bigint
+language sql as $$
+  update download_counter set total = total + 1 where id = 1 returning total;
+$$;
+-- Only the server (service role) may call it, never the public browser key.
+revoke execute on function increment_downloads() from public, anon, authenticated;
+
+-- Want to start above 0 (for example, downloads that happened before this feature)? Run this once, with your number:
+-- update download_counter set total = 500 where id = 1;

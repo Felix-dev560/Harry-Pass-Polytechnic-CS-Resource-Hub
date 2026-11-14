@@ -288,11 +288,31 @@ footer.site-foot .wrap { display: block; }
   .menu, .toast, .toast.is-leaving, .skeleton, .pill-btn.is-loading::after { animation-duration: .01ms; animation-iteration-count: 1; }
 }
 
+/* ---------- Download counter in the top bar ---------- */
+.dl-pill {
+  margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: .4rem;
+  min-height: 2.25rem; padding: 0 .8rem; border: 1px solid var(--line); border-radius: 999px;
+  background: transparent; color: var(--ink); font: 700 .95rem/1 var(--font-body);
+  font-variant-numeric: tabular-nums; white-space: nowrap; cursor: default;
+}
+.dl-pill[hidden] { display: none; }
+.dl-pill:hover { background: var(--hover); }
+.dl-pill:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.dl-pill .icon { width: 1.05rem; height: 1.05rem; }
+.dl-short { display: none; }
+.dl-label { display: none; color: var(--muted); font-weight: 500; font-size: .85rem; }
+@media (min-width: 40rem) { .dl-label { display: inline; } }
+
 /* ---------- Phones: tighter, app-sized layout (the root font is already 14px, see style.css) ---------- */
 @media (max-width: 39.99rem) {
   .topbar .wrap { min-height: 3.1rem; padding-block: .35rem; }
   .brand-text strong { font-size: 1rem; }
   .brand-text small { font-size: .78rem; margin-top: .1rem; }
+  /* Download counter: small on a phone. A long number (100,000 and up) is shortened, and a tap shows it in full. */
+  .dl-pill { min-height: 2.2rem; padding: 0 .6rem; gap: .3rem; font-size: .85rem; cursor: pointer; }
+  .dl-pill .icon { width: .95rem; height: .95rem; }
+  .dl-pill.is-big:not(.is-open) .dl-full { display: none; }
+  .dl-pill.is-big:not(.is-open) .dl-short { display: inline; }
   /* The dropdown keeps a small gap from the right edge of the screen, and the three dots sit a little in from it. */
   .menu-wrap { margin-right: .3rem; }
   .menu { width: 10rem; right: 0; }
@@ -409,4 +429,4 @@ body:has(.notify-bar) .toasts { bottom: calc(max(.75rem, env(safe-area-inset-bot
 
 /* ---------- Developer line: sits just above the link icons ---------- */
 .dev-line { display: flex; justify-content: center; align-items: baseline; gap: .4rem; margin: 0 0 .4rem; color: var(--muted); font-size: .92rem; text-align: center; }
-.dev-line .dev-name { font-size: 1.5rem; }    
+.dev-line .dev-name { font-size: 1.5rem; }

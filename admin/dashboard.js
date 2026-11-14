@@ -34,6 +34,15 @@ $('logout').addEventListener('click', async () => {
   try { await api('/api/auth/logout', { method: 'POST' }); } finally { location.replace('index.html#login'); }
 });
 
+// ---------- Download total (landing view only) ----------
+/** Fills the card at the top of the landing view with how many times students have pressed Download. */
+async function loadDownloadTotal() {
+  try {
+    const { total } = await api('/api/stats/downloads');
+    $('dl-total').textContent = new Intl.NumberFormat('en-US').format(Number(total) || 0);
+  } catch { /* keep the dash if the number cannot be loaded */ }
+}
+
 // ---------- Views (one at a time, chosen from the menu) ----------
 function showView(name) {
   if (name === 'upload' || name === 'materials') name = 'courses';
@@ -42,6 +51,7 @@ function showView(name) {
   for (const item of document.querySelectorAll('[data-view]')) item.setAttribute('aria-current', String(item.dataset.view === name));
   history.replaceState(null, '', `#${name}`);
   window.scrollTo({ top: 0 });
+  if (name === 'courses') loadDownloadTotal();
   if (name === 'posts') refreshOpenCourses();
   if (name === 'submissions') loadSubmissions();
 }

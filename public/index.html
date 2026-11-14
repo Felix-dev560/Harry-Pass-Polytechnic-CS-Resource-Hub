@@ -17,13 +17,14 @@
 </head>
 <body class="student">
 <div class="splash" id="splash" role="status" aria-label="Loading">
-  <div><h1>Harry Pass Polytechnic</h1><p>Computer Science Resource Hub</p></div>
+  <div><h1>Harry Pass Polytechnic</h1></div>
 </div>
 
 <header class="topbar"><div class="wrap">
   <div class="top-left">
-    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong><small>Computer Science Resource Hub</small></span></a>
+    <a class="brand-link" href="index.html"><span class="brand-text"><strong>Harry Pass Polytechnic</strong></span></a>
   </div>
+  <button type="button" class="dl-pill" id="dl-pill" hidden title="Total downloads so far" aria-label="Total downloads"><svg viewBox="0 0 24 24" aria-hidden="true" class="icon"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg><span class="dl-num"><span class="dl-full" id="dl-full">0</span><span class="dl-short" id="dl-short">0</span></span><span class="dl-label">downloads</span></button>
   <div class="menu-wrap">
     <button type="button" class="icon-btn" id="menu-btn" aria-label="Open menu" aria-haspopup="menu" aria-expanded="false" aria-controls="menu"><svg viewBox="0 0 24 24" aria-hidden="true" class="icon"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg></button>
     <div class="menu" id="menu" role="menu" hidden>
@@ -67,5 +68,6 @@
 <script type="module" src="js/splash.js"></script>
 <script type="module" src="js/search.js"></script>
 <script type="module" src="js/level-counts.js"></script>
+<script type="module" src="js/download-count.js"></script>
 <script type="module" src="js/notify.js"></script>
 </body></html>
