@@ -635,6 +635,23 @@ function bundleDetails(g) {
   ].join('\r\n') + '\r\n';
 }
 
+/** Reads one photo. Tries Cloudinary directly (fastest); if the browser refuses, reads it through our own server. */
+async function fetchPhoto(s, i) {
+  try {
+    const direct = await fetch(s.image_url, { credentials: 'omit' });
+    if (direct.ok) return direct;
+  } catch { /* blocked or offline: use our server below */ }
+  let viaServer;
+  try {
+    viaServer = await fetch(`/api/submissions/${s.id}/file`, { credentials: 'same-origin' });
+  } catch {
+    throw new Error(`Photo ${i + 1} could not be reached.`);
+  }
+  if (viaServer.status === 401) { location.replace('index.html#login'); throw new Error('Please sign in again.'); }
+  if (!viaServer.ok) throw new Error(`Photo ${i + 1} could not be fetched.`);
+  return viaServer;
+}
+
 /** Packs every photo of a bundle, plus its details, into one ZIP that downloads with a single tap. */
 async function downloadAll(g, btn) {
   if (btn?.disabled) return;
@@ -647,8 +664,7 @@ async function downloadAll(g, btn) {
     const worker = async () => { // fetch 4 photos at a time
       while (next < g.items.length) {
         const i = next++;
-        const res = await fetch(g.items[i].image_url, { credentials: 'omit' });
-        if (!res.ok) throw new Error(`Photo ${i + 1} could not be fetched.`);
+        const res = await fetchPhoto(g.items[i], i);
         const ext = /\.(jpe?g|png|webp)$/i.exec(new URL(g.items[i].image_url).pathname)?.[1]?.toLowerCase() || 'jpg';
         photos[i] = { name: `${fileName(g, i)}.${ext}`, data: new Uint8Array(await res.arrayBuffer()) };
       }
@@ -665,7 +681,7 @@ async function downloadAll(g, btn) {
     setTimeout(() => URL.revokeObjectURL(url), 60000);
     toast('success', 'ZIP ready', `${zipName} is in your downloads folder.`, 6000);
   } catch (err) {
-    toast('error', 'Could not make the ZIP', `${err.message} Check your connection and try again.`, 7000);
+    toast('error', 'Could not make the ZIP', `${err.message} Try again in a moment.`, 7000);
   } finally {
     if (btn) setBusy(btn, false);
   }

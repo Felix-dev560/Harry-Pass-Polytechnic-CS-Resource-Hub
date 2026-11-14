@@ -195,6 +195,23 @@ router.get('/', requireAdmin, asyncHandler(async (_req, res) => {
   res.json({ submissions: data });
 }));
 
+// The dashboard builds the ZIP from these. It reads each photo through our own server, so the ZIP still works
+// when the browser refuses to read Cloudinary directly. Admin only, and only for photos saved in the database.
+router.get('/:id/file', requireAdmin, asyncHandler(async (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'Invalid id.');
+  const { data: row, error } = await db.from('student_submissions').select('image_url').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!row) throw new HttpError(404, 'Photo not found.');
+  const url = new URL(row.image_url);
+  if (url.protocol !== 'https:' || url.hostname !== 'res.cloudinary.com') throw new HttpError(400, 'Invalid photo link.');
+  const upstream = await fetch(url);
+  if (!upstream.ok) throw new HttpError(502, 'The photo could not be read from storage.');
+  res.set('Content-Type', upstream.headers.get('content-type') || 'image/jpeg');
+  res.set('Cache-Control', 'private, no-store');
+  res.send(Buffer.from(await upstream.arrayBuffer()));
+}));
+
 router.delete('/:id', requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) throw new HttpError(400, 'Invalid id.');
