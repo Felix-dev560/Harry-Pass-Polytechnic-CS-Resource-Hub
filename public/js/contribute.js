@@ -103,7 +103,6 @@ const cancelBtn = document.getElementById('send-cancel');
 
 function fail(message) {
   setStatus(statusEl, message, 'error');
-  toast('error', 'Check the form', message);
 }
 
 function setProgress(value) {
